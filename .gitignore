@@ -26,6 +26,7 @@ debug/
 config/playground-access.json
 
 # Private planning and agent docs
+docs/deployment/
 docs/superpowers/
 /state/
 /specs/
