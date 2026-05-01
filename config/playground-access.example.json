@@ -1,0 +1,20 @@
+{
+  "defaultAuthenticatedTier": "free",
+  "tiers": {
+    "free": {
+      "defaultStageSlug": "my-stage",
+      "maxStages": 1,
+      "maxObjectsPerStage": 5,
+      "canCreateStages": false
+    },
+    "pro": {
+      "defaultStageSlug": "my-stage",
+      "maxStages": 50,
+      "maxObjectsPerStage": 10,
+      "canCreateStages": true
+    }
+  },
+  "userOverrides": {
+    "operator@example.com": "pro"
+  }
+}

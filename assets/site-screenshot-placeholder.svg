@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Website screenshot placeholder</title>
+  <desc id="desc">A placeholder frame for a future screenshot of Shared Physics Playground.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#172554"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="720" rx="28" fill="url(#bg)"/>
+  <rect width="1280" height="720" rx="28" fill="url(#grid)"/>
+  <rect x="86" y="78" width="1108" height="564" rx="22" fill="#020617" fill-opacity="0.62" stroke="#ffffff" stroke-opacity="0.24"/>
+  <rect x="126" y="122" width="390" height="44" rx="10" fill="#38bdf8" fill-opacity="0.22"/>
+  <rect x="126" y="194" width="300" height="26" rx="8" fill="#ffffff" fill-opacity="0.18"/>
+  <rect x="126" y="240" width="420" height="22" rx="7" fill="#ffffff" fill-opacity="0.12"/>
+  <rect x="126" y="282" width="360" height="22" rx="7" fill="#ffffff" fill-opacity="0.12"/>
+  <rect x="126" y="348" width="210" height="58" rx="14" fill="#22c55e" fill-opacity="0.78"/>
+  <rect x="620" y="162" width="480" height="320" rx="18" fill="#e2e8f0" fill-opacity="0.12" stroke="#e2e8f0" stroke-opacity="0.2"/>
+  <path d="M690 410 L1030 250" fill="none" stroke="#f8fafc" stroke-width="12" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="760" cy="377" r="34" fill="#f97316"/>
+  <path d="M760 377 L760 343" stroke="#fed7aa" stroke-width="4" stroke-linecap="round"/>
+  <text x="640" y="560" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">Shared Physics Playground</text>
+  <text x="640" y="604" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="24">Screenshot placeholder - replace with deployed site capture</text>
+</svg>

@@ -1,0 +1,39 @@
+services:
+  server:
+    image: ${GHCR_IMAGE:-ghcr.io/pony-maggie/shared-physics-playground}:${APP_IMAGE_TAG:-latest}
+    container_name: ${SERVER_CONTAINER_NAME:-shared-physics-server}
+    restart: unless-stopped
+    command: ["node", "--import", "tsx", "apps/server/src/index.ts"]
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: ${SERVER_PORT:-2567}
+      PLAYGROUND_LOG_PATH: ${PLAYGROUND_LOG_PATH:-/app-logs/server-events.log}
+      PLAYGROUND_LOG_TO_STDOUT: ${PLAYGROUND_LOG_TO_STDOUT:-true}
+    ports:
+      - "${SERVER_HOST_BIND:-172.17.0.1:2568}:${SERVER_PORT:-2567}"
+    volumes:
+      - /opt/shared_physics_playground/data:/app/data
+      - /opt/shared_physics_playground/logs:/app-logs
+      - /opt/shared_physics_playground/app/config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:2567/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web:
+    image: ${GHCR_IMAGE:-ghcr.io/pony-maggie/shared-physics-playground}:${APP_IMAGE_TAG:-latest}
+    container_name: ${WEB_CONTAINER_NAME:-shared-physics-web}
+    restart: unless-stopped
+    command: ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "4173"]
+    working_dir: /app/apps/web
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      NODE_ENV: production
+    ports:
+      - "${WEB_HOST_BIND:-172.17.0.1:4174}:${WEB_PORT:-4173}"

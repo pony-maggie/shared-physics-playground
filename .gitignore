@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+apps/**/node_modules/
+.pnpm-store/
+
+# Build and test output
+dist/
+build/
+coverage/
+apps/**/dist/
+test-results/
+.vitest-localstorage*
+
+# Local runtime data
+.dev-runtime/
+data/
+debug/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# Local secrets and machine config
+.env*
+!.env.example
+config/playground-access.json
+
+# Private planning and agent docs
+docs/superpowers/
+/state/
+/specs/
+idea.md
+
+# Editor and OS files
+.DS_Store
+docs/.DS_Store
+.idea/
+.vscode/
+*.log
+*.tmp

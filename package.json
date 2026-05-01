@@ -1,0 +1,23 @@
+{
+  "name": "shared-physics-playground",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @playground/web --filter @playground/server dev",
+    "test": "NODE_OPTIONS=--localstorage-file=.vitest-localstorage vitest run",
+    "typecheck": "pnpm -r typecheck",
+    "check:web-build": "node scripts/check-web-build.mjs",
+    "analyze:web-build": "node scripts/analyze-web-build.mjs",
+    "e2e": "playwright test",
+    "harness:init": "./harness/init.sh",
+    "harness:verify": "./harness/verify.sh",
+    "harness:smoke": "./harness/smoke.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "jsdom": "^27.0.1",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

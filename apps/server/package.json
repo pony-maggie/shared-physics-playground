@@ -1,0 +1,30 @@
+{
+  "name": "@playground/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@colyseus/ws-transport": "^0.16.5",
+    "@playground/physics-schema": "file:../../packages/physics-schema",
+    "@playground/prompt-contracts": "file:../../packages/prompt-contracts",
+    "better-sqlite3": "^11.10.0",
+    "colyseus": "^0.16.5",
+    "express": "^5.1.0",
+    "nodemailer": "^8.0.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
