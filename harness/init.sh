@@ -7,9 +7,6 @@ echo "==> harness init"
 required_paths=(
   "AGENTS.md"
   "CLAUDE.md"
-  "state/feature-list.json"
-  "state/progress.md"
-  "state/handoff.md"
   "harness/verify.sh"
   "harness/smoke.sh"
 )
@@ -23,6 +20,6 @@ done
 
 echo "Repository scaffold is present."
 echo "Next:"
-echo "  1. Read state/progress.md"
-echo "  2. Read state/handoff.md"
-echo "  3. Pick one scoped feature or follow-up from state/feature-list.json"
+echo "  1. Read README.md"
+echo "  2. Read LOCAL-SETUP.md"
+echo "  3. Run ./scripts/dev-up.sh"
