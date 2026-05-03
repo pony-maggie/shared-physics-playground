@@ -525,24 +525,44 @@ function motionPoint(
 }
 
 function MotionMarker(props: {
+  accent: string;
   diagram: GenericTemplateConfig["diagram"];
   playback: ExperimentPlayback;
   variables: Record<string, number>;
 }) {
   const point = motionPoint(props.diagram, props.playback.progress, props.variables);
+  const markerProps = {
+    "data-motion-signature": motionSignature(props.diagram, props.variables),
+    "data-progress": String(props.playback.progressPercent),
+    "data-running": String(props.playback.isRunning),
+    "data-testid": "experiment-motion-marker",
+  };
+
+  if (props.diagram === "fluid") {
+    return (
+      <rect
+        x={point.x - 21}
+        y={point.y - 21}
+        width="42"
+        height="42"
+        rx="5"
+        fill={props.accent}
+        stroke="#07121f"
+        strokeWidth="2"
+        {...markerProps}
+      />
+    );
+  }
 
   return (
     <circle
       cx={point.x}
       cy={point.y}
-      data-motion-signature={motionSignature(props.diagram, props.variables)}
-      data-progress={String(props.playback.progressPercent)}
-      data-running={String(props.playback.isRunning)}
-      data-testid="experiment-motion-marker"
       r="8"
       fill="#f4f7fb"
       stroke="#07121f"
       strokeWidth="2"
+      {...markerProps}
     />
   );
 }
@@ -553,7 +573,14 @@ function GenericTemplateDiagram(props: {
   title: string;
   variables: Record<string, number>;
 }) {
-  const marker = <MotionMarker diagram={props.config.diagram} playback={props.playback} variables={props.variables} />;
+  const marker = (
+    <MotionMarker
+      accent={props.config.accent}
+      diagram={props.config.diagram}
+      playback={props.playback}
+      variables={props.variables}
+    />
+  );
 
   if (props.config.diagram === "pendulum") {
     return (
@@ -594,7 +621,6 @@ function GenericTemplateDiagram(props: {
       <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
         <rect x="70" y="58" width="180" height="92" rx="8" fill="#113044" stroke="#344054" strokeWidth="4" />
         <path d="M 72 95 C 105 83 130 107 160 95 S 215 83 248 95 L 248 148 L 72 148 Z" fill="#5fc7ff" opacity="0.55" />
-        <rect x="140" y="82" width="42" height="42" rx="5" fill={props.config.accent} />
         {marker}
       </svg>
     );

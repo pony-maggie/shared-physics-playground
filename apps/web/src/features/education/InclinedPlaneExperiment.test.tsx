@@ -491,6 +491,25 @@ describe("InclinedPlaneExperiment", () => {
     expect(screen.getByTestId("experiment-motion-marker").getAttribute("data-progress")).toBe("0");
   });
 
+  test("renders buoyancy motion as the floating block instead of an extra ball", async () => {
+    const { container } = render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={genericPlan(
+          "buoyancy",
+          { objectVolumeL: 4, objectMassKg: 2, fluidDensityKgM3: 1000 },
+          { buoyantForceN: 39.24, weightN: 19.62, netForceN: 19.62, willFloat: true },
+        )}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    const marker = await screen.findByTestId("experiment-motion-marker");
+
+    expect(marker.tagName.toLowerCase()).toBe("rect");
+    expect(container.querySelector(".experiment-diagram circle")).toBeNull();
+  });
+
   test.each([
     [
       "pendulum",
