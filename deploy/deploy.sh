@@ -3,6 +3,7 @@ set -euo pipefail
 
 APP_DIR=${APP_DIR:-/opt/shared_physics_playground/app}
 COMPOSE_FILE=${COMPOSE_FILE:-docker-compose.prod.yml}
+COMPOSE_PROJECT=${COMPOSE_PROJECT:-shared-physics}
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker is not installed" >&2
@@ -32,7 +33,7 @@ if [[ ! -f config/playground-access.json ]]; then
   exit 1
 fi
 
-docker compose -f "${COMPOSE_FILE}" config >/dev/null
-docker compose -f "${COMPOSE_FILE}" pull
-docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
+docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" config >/dev/null
+docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" pull
+docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" up -d --remove-orphans
 docker image prune -f

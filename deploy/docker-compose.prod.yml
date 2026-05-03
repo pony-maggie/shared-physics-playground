@@ -3,7 +3,8 @@ services:
     image: ${GHCR_IMAGE:-ghcr.io/pony-maggie/shared-physics-playground}:${APP_IMAGE_TAG:-latest}
     container_name: ${SERVER_CONTAINER_NAME:-shared-physics-server}
     restart: unless-stopped
-    command: ["node", "--import", "tsx", "apps/server/src/index.ts"]
+    command: ["./node_modules/.bin/tsx", "src/index.ts"]
+    working_dir: /app/apps/server
     env_file:
       - path: ./.env
         required: false
