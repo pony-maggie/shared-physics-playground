@@ -61,4 +61,7 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    allowedHosts: ["pyhsics.lucasma.cc", "physics.lucasma.cc"],
+  },
 });
