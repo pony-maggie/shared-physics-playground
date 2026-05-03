@@ -26,6 +26,7 @@ export function AuthPanel(props: {
   const [challengeAnswer, setChallengeAnswer] = useState("");
   const [code, setCode] = useState("");
   const language = props.language;
+  const isRequestingCode = props.requestStatus.kind === "requesting";
 
   return (
     <section className="panel">
@@ -70,10 +71,11 @@ export function AuthPanel(props: {
           </div>
           <button
             className="tool-button"
+            disabled={isRequestingCode}
             type="button"
             onClick={() => props.onRequestCode(email, challengeAnswer)}
           >
-            {t(language, "requestCode")}
+            {t(language, isRequestingCode ? "requestingCode" : "requestCode")}
           </button>
           <div className="field-stack">
             <label className="data-label" htmlFor="auth-code">
@@ -96,6 +98,11 @@ export function AuthPanel(props: {
           {props.requestStatus.kind === "error" ? (
             <p className="feedback-banner feedback-banner--error">
               {props.requestStatus.message}
+            </p>
+          ) : null}
+          {props.requestStatus.kind === "requested" ? (
+            <p className="feedback-banner">
+              {t(language, "codeRequested")}
             </p>
           ) : null}
           {props.verifyStatus.kind === "error" ? (

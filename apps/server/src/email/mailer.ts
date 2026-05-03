@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-import { getSmtpConfig, type SmtpConfig } from "./smtp-config";
+import { getSmtpConfig, isSmtpConfigured, type SmtpConfig } from "./smtp-config";
 
 export type LoginCodeEmailInput = {
   email: string;
@@ -23,8 +23,72 @@ type Transport = {
 
 type MailerFactoryInput = {
   env?: Record<string, string | undefined>;
+  fetchImpl?: typeof fetch;
   transportFactory?: (config: SmtpConfig) => Transport;
 };
+
+type ResendConfig = {
+  apiKey: string;
+  from: {
+    email: string;
+    name: string;
+  };
+};
+
+type EmailMessage = {
+  html: string;
+  subject: string;
+  text: string;
+};
+
+type EmailDeliveryInput = EmailMessage & {
+  to: string;
+};
+
+function read(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function formatFrom(input: { email: string; name: string }): string {
+  return `"${input.name}" <${input.email}>`;
+}
+
+function mailProvider(env: Record<string, string | undefined>): "resend" | "smtp" {
+  return read(env.MAIL_PROVIDER).toLowerCase() === "resend" || read(env.RESEND_API_KEY).length > 0
+    ? "resend"
+    : "smtp";
+}
+
+function getResendConfig(env: Record<string, string | undefined>): ResendConfig {
+  const apiKey = read(env.RESEND_API_KEY);
+  const email = read(env.RESEND_FROM_EMAIL || env.MAIL_FROM_EMAIL || env.SMTP_FROM_EMAIL);
+  const name = read(env.RESEND_FROM_NAME || env.MAIL_FROM_NAME || env.SMTP_FROM_NAME);
+
+  if (!apiKey || !email || !name) {
+    throw new Error("Resend is not fully configured");
+  }
+
+  return {
+    apiKey,
+    from: {
+      email,
+      name,
+    },
+  };
+}
+
+function isResendConfigured(env: Record<string, string | undefined>): boolean {
+  try {
+    getResendConfig(env);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isMailerConfigured(env: Record<string, string | undefined> = process.env): boolean {
+  return mailProvider(env) === "resend" ? isResendConfigured(env) : isSmtpConfigured(env);
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -82,6 +146,7 @@ export function renderProInterestEmail(input: ProInterestEmailInput) {
 
 export function createMailer({
   env = process.env,
+  fetchImpl = fetch,
   transportFactory = (config) =>
     nodemailer.createTransport({
       host: config.host,
@@ -91,6 +156,50 @@ export function createMailer({
       auth: config.auth,
     }),
 }: MailerFactoryInput = {}) {
+  if (mailProvider(env) === "resend") {
+    const config = getResendConfig(env);
+
+    async function sendResendEmail(input: EmailDeliveryInput) {
+      const response = await fetchImpl("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: formatFrom(config.from),
+          to: input.to,
+          subject: input.subject,
+          text: input.text,
+          html: input.html,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Resend email failed with status ${response.status}`);
+      }
+    }
+
+    return {
+      async sendLoginCode(input: LoginCodeEmailInput) {
+        const message = renderLoginCodeEmail(input);
+
+        await sendResendEmail({
+          to: input.email,
+          ...message,
+        });
+      },
+      async sendProInterest(input: ProInterestEmailInput & { operatorEmail: string }) {
+        const message = renderProInterestEmail(input);
+
+        await sendResendEmail({
+          to: input.operatorEmail,
+          ...message,
+        });
+      },
+    };
+  }
+
   const config = getSmtpConfig(env);
   const transport = transportFactory(config);
 
@@ -99,7 +208,7 @@ export function createMailer({
       const message = renderLoginCodeEmail(input);
 
       await transport.sendMail({
-        from: `"${config.from.name}" <${config.from.email}>`,
+        from: formatFrom(config.from),
         to: input.email,
         subject: message.subject,
         text: message.text,
@@ -110,7 +219,7 @@ export function createMailer({
       const message = renderProInterestEmail(input);
 
       await transport.sendMail({
-        from: `"${config.from.name}" <${config.from.email}>`,
+        from: formatFrom(config.from),
         to: input.operatorEmail,
         subject: message.subject,
         text: message.text,

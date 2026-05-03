@@ -7,8 +7,7 @@ import express from "express";
 import { DEFAULT_RUNTIME_ACCESS_CONFIG } from "../../../packages/shared/src/access-policy";
 import { createAuthService, type AuthUser } from "./auth/auth-service";
 import { parseObservabilityConfig } from "./config/observability-config";
-import { createMailer, type ProInterestEmailInput } from "./email/mailer";
-import { isSmtpConfigured } from "./email/smtp-config";
+import { createMailer, isMailerConfigured, type ProInterestEmailInput } from "./email/mailer";
 import {
   createEducationModelPlanner,
   type EducationModelPlanner,
@@ -871,7 +870,7 @@ export function createRealtimeServer(port = DEFAULT_PORT) {
   const app = express();
   const server = http.createServer(app);
   const worldRepository = createWorldRepository("data/worlds.sqlite");
-  const mailer = isSmtpConfigured() ? createMailer() : null;
+  const mailer = isMailerConfigured() ? createMailer() : null;
   const authService = createAuthService({
     repository: worldRepository,
     sendLoginCodeEmail: mailer ? (input) => mailer.sendLoginCode(input) : undefined,
