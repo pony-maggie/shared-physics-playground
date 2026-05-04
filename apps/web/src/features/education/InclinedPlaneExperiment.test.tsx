@@ -510,6 +510,28 @@ describe("InclinedPlaneExperiment", () => {
     expect(container.querySelector(".experiment-diagram circle")).toBeNull();
   });
 
+  test("renders pendulum motion as the pendulum bob instead of an extra marker ball", async () => {
+    const { container } = render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={genericPlan(
+          "pendulum",
+          { lengthM: 2, gravityMps2: 9.81, amplitudeDeg: 24, massKg: 1 },
+          { periodS: 2.85, frequencyHz: 0.35, maxSpeedMps: 1.87, tensionAtBottomN: 11.56 },
+        )}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    const marker = await screen.findByTestId("experiment-motion-marker");
+    const circles = Array.from(container.querySelectorAll(".experiment-diagram circle"));
+
+    expect(marker.tagName.toLowerCase()).toBe("circle");
+    expect(circles).toHaveLength(1);
+    expect(marker.getAttribute("fill")).toBe("#5fc7ff");
+    expect(marker.getAttribute("r")).toBe("18");
+  });
+
   test.each([
     [
       "pendulum",

@@ -583,12 +583,24 @@ function GenericTemplateDiagram(props: {
   );
 
   if (props.config.diagram === "pendulum") {
+    const bob = motionPoint("pendulum", props.playback.progress, props.variables);
+
     return (
       <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
-        <line x1="160" x2="210" y1="30" y2="125" stroke="#7c88ff" strokeWidth="4" />
-        <circle cx="210" cy="125" r="18" fill={props.config.accent} />
         <line x1="110" x2="210" y1="30" y2="30" stroke="#344054" strokeWidth="8" />
-        {marker}
+        <line x1="160" x2={bob.x} y1="30" y2={bob.y} stroke="#7c88ff" strokeWidth="4" />
+        <circle
+          cx={bob.x}
+          cy={bob.y}
+          r="18"
+          fill={props.config.accent}
+          stroke="#07121f"
+          strokeWidth="2"
+          data-motion-signature={motionSignature(props.config.diagram, props.variables)}
+          data-progress={String(props.playback.progressPercent)}
+          data-running={String(props.playback.isRunning)}
+          data-testid="experiment-motion-marker"
+        />
       </svg>
     );
   }

@@ -157,6 +157,24 @@ test("authenticated browser flow can generate every built-in experiment", async 
     const experimentPanel = page.getByRole("region", { name: "Generated Experiment" });
     await expect(experimentPanel.getByRole("heading", { name: experimentTitle })).toBeVisible();
     await expect(experimentPanel.getByRole("button", { name: "Play Experiment" })).toBeVisible();
+    if (chipLabel === "Pendulum") {
+      const pendulumGeometry = await experimentPanel.locator(".experiment-diagram").evaluate((diagram) => {
+        const circles = Array.from(diagram.querySelectorAll("circle"));
+        const marker = diagram.querySelector('[data-testid="experiment-motion-marker"]');
+
+        return {
+          circleCount: circles.length,
+          markerFill: marker?.getAttribute("fill"),
+          markerRadius: marker?.getAttribute("r"),
+        };
+      });
+
+      expect(pendulumGeometry).toEqual({
+        circleCount: 1,
+        markerFill: "#5fc7ff",
+        markerRadius: "18",
+      });
+    }
     await experimentPanel.getByRole("button", { name: "Play Experiment" }).click();
     await expect(experimentPanel.getByRole("button", { name: "Pause Experiment" })).toBeVisible();
     await expect(
