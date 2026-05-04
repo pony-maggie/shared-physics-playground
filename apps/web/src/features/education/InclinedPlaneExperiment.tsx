@@ -9,8 +9,13 @@ import { t } from "../../i18n";
 import type { Language } from "../../state/auth-store";
 import type { PlannedSimulation } from "../../state/simulation-client";
 import { ExperimentPlaybackControls, useExperimentPlayback } from "./experiment-playback";
+import type { LessonStepId } from "./lesson-flow";
+import { createLessonFlow } from "./lesson-flow";
+import { LessonRail } from "./LessonRail";
+import type { ExperimentPlaybackState, ExperimentViewerState } from "./three/types";
 
 const GenericTemplateExperiment = React.lazy(() => import("./GenericTemplateExperiment"));
+const Experiment3DViewer = React.lazy(() => import("./three/Experiment3DViewer"));
 
 type GenericTemplateConcept = Exclude<
   PlannedSimulation["plan"]["concept"],
@@ -39,6 +44,95 @@ type SpringOscillatorMeasurements = {
   energyJ: number;
   willOscillate: boolean;
 };
+
+function createViewerPlaybackState(
+  playback: Pick<ExperimentPlaybackState, "isRunning" | "progress" | "progressPercent"> & {
+    reset: () => void;
+    toggle?: () => void;
+  },
+): ExperimentPlaybackState {
+  return {
+    isRunning: playback.isRunning,
+    pause: () => {
+      if (playback.isRunning) {
+        playback.toggle?.();
+      }
+    },
+    play: () => {
+      if (!playback.isRunning) {
+        playback.toggle?.();
+      }
+    },
+    progress: playback.progress,
+    progressPercent: playback.progressPercent,
+    reset: playback.reset,
+  };
+}
+
+function ThreeCourseLabWorkspace(props: {
+  children: React.ReactNode;
+  language: Language;
+  measurements: Record<string, unknown>;
+  onVariablesChange: (variables: Record<string, number>) => void;
+  playback: ExperimentPlaybackState;
+  planned: PlannedSimulation;
+}) {
+  const [activeLessonStep, setActiveLessonStep] = useState<LessonStepId>("predict");
+  const [focusedRoles, setFocusedRoles] = useState<ExperimentViewerState["focusedRoles"]>([
+    "moving-object",
+  ]);
+  const lessonFlow = useMemo(
+    () =>
+      createLessonFlow({
+        language: props.language,
+        measurements: props.measurements,
+        plan: props.planned.plan,
+      }),
+    [props.language, props.measurements, props.planned.plan],
+  );
+  const viewerState: ExperimentViewerState = {
+    activeStep: activeLessonStep,
+    cameraPreset: "default",
+    displayLayers: {
+      forces: true,
+      labels: true,
+      measurements: true,
+      trails: true,
+    },
+    focusedRoles,
+  };
+
+  return (
+    <div className="full-3d-lab-workspace">
+      <div className="experiment-tools-rail">{props.children}</div>
+      <React.Suspense
+        fallback={<div className="experiment-3d-fallback">Loading 3D experiment...</div>}
+      >
+        <Experiment3DViewer
+          language={props.language}
+          measurements={props.measurements}
+          plan={props.planned.plan}
+          playback={props.playback}
+          viewerState={viewerState}
+        />
+      </React.Suspense>
+      <LessonRail
+        activeStep={activeLessonStep}
+        flow={lessonFlow}
+        language={props.language}
+        measurements={props.measurements}
+        onStepChange={(stepId, nextFocusedRoles) => {
+          setActiveLessonStep(stepId);
+          setFocusedRoles(nextFocusedRoles as ExperimentViewerState["focusedRoles"]);
+        }}
+        onVariation={(variables) => {
+          props.onVariablesChange(variables);
+          props.playback.reset();
+        }}
+      />
+    </div>
+  );
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -510,48 +604,19 @@ export function InclinedPlaneExperiment(props: {
         <p className="panel-copy">{plan.objective}</p>
       </div>
 
-      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={plan.title}>
-        <line
-          x1={rampStart.x}
-          x2={rampEnd.x}
-          y1={rampStart.y}
-          y2={rampEnd.y}
-          stroke="#7c88ff"
-          strokeLinecap="round"
-          strokeWidth={rampStrokeWidth}
-        />
-        <circle
-          cx={ballX}
-          cy={ballY}
-          data-progress={String(progressPercent)}
-          data-running={String(isRunning)}
-          data-testid="rolling-ball"
-          r={ballRadius}
-          fill="#5fc7ff"
-        />
-        <line x1="40" x2="285" y1="148" y2="148" stroke="#344054" strokeWidth="2" />
-      </svg>
-
-      <div className="button-cluster experiment-playback">
-        <button
-          className="tool-button tool-button--primary"
-          disabled={!inclinedMeasurements.willSlide}
-          type="button"
-          onClick={togglePlayback}
-        >
-          {isRunning
-            ? t(props.language, "pauseExperiment")
-            : t(props.language, "playExperiment")}
-        </button>
-        <button className="tool-button" type="button" onClick={resetPlayback}>
-          {t(props.language, "resetExperiment")}
-        </button>
-        <span className="status-inline__meta">
-          {t(props.language, "experimentProgress", { value: progressPercent })}
-        </span>
-      </div>
-
-      <div className="experiment-grid">
+      <ThreeCourseLabWorkspace
+        language={props.language}
+        measurements={measurements as Record<string, unknown>}
+        planned={props.planned}
+        playback={createViewerPlaybackState({
+          isRunning,
+          progress,
+          progressPercent,
+          reset: resetPlayback,
+          toggle: togglePlayback,
+        })}
+        onVariablesChange={(variables) => props.onVariablesChange(variables)}
+      >
         <div className="experiment-controls">
           <VariableSlider
             id="angle"
@@ -609,7 +674,48 @@ export function InclinedPlaneExperiment(props: {
           </p>
           <p className="panel-copy">{props.planned.explanation}</p>
         </div>
-      </div>
+
+        <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={plan.title}>
+          <line
+            x1={rampStart.x}
+            x2={rampEnd.x}
+            y1={rampStart.y}
+            y2={rampEnd.y}
+            stroke="#7c88ff"
+            strokeLinecap="round"
+            strokeWidth={rampStrokeWidth}
+          />
+          <circle
+            cx={ballX}
+            cy={ballY}
+            data-progress={String(progressPercent)}
+            data-running={String(isRunning)}
+            data-testid="rolling-ball"
+            r={ballRadius}
+            fill="#5fc7ff"
+          />
+          <line x1="40" x2="285" y1="148" y2="148" stroke="#344054" strokeWidth="2" />
+        </svg>
+
+        <div className="button-cluster experiment-playback">
+          <button
+            className="tool-button tool-button--primary"
+            disabled={!inclinedMeasurements.willSlide}
+            type="button"
+            onClick={togglePlayback}
+          >
+            {isRunning
+              ? t(props.language, "pauseExperiment")
+              : t(props.language, "playExperiment")}
+          </button>
+          <button className="tool-button" type="button" onClick={resetPlayback}>
+            {t(props.language, "resetExperiment")}
+          </button>
+          <span className="status-inline__meta">
+            {t(props.language, "experimentProgress", { value: progressPercent })}
+          </span>
+        </div>
+      </ThreeCourseLabWorkspace>
 
       <div className="experiment-questions">
         <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>

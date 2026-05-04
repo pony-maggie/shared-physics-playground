@@ -627,6 +627,96 @@ input {
   align-items: center;
 }
 
+.full-3d-lab-workspace {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) minmax(240px, 300px);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.experiment-tools-rail,
+.lesson-rail,
+.experiment-3d-viewer {
+  min-width: 0;
+}
+
+.experiment-tools-rail {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.experiment-3d-viewer {
+  display: grid;
+  grid-template-rows: auto minmax(360px, 1fr);
+  gap: 10px;
+}
+
+.experiment-3d-viewer__header {
+  display: grid;
+  gap: 4px;
+}
+
+.experiment-3d-viewer__canvas,
+.experiment-3d-fallback {
+  min-height: 360px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: #101826;
+}
+
+.experiment-3d-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.lesson-rail {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.lesson-rail__steps {
+  display: grid;
+  gap: 6px;
+}
+
+.lesson-rail__step {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: left;
+}
+
+.lesson-rail__step--active {
+  border-color: var(--accent-ring);
+  color: var(--text-primary);
+  background: var(--accent-muted);
+}
+
+.lesson-rail__body,
+.lesson-rail__measurements {
+  display: grid;
+  gap: 10px;
+}
+
+.lesson-rail__measurements {
+  margin: 0;
+}
+
+.lesson-rail__measurements dd {
+  margin: 0;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -658,6 +748,14 @@ input {
 
   .experiment-slider {
     grid-template-columns: 1fr;
+  }
+
+  .full-3d-lab-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .experiment-3d-viewer {
+    grid-row: 1;
   }
 
   .auth-trigger {
