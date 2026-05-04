@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 
 import type { SimulationPlan } from "../../../../../../packages/prompt-contracts/src/simulation-spec";
 import type { Language } from "../../../state/auth-store";
+import { createExperimentVisualMetadata } from "./derived-visuals";
 import { getExperiment3DRenderer } from "./renderers";
 import type { ExperimentPlaybackState, ExperimentViewerState } from "./types";
 
@@ -14,14 +15,23 @@ export function Experiment3DViewer(props: {
   viewerState: ExperimentViewerState;
 }) {
   const Renderer = getExperiment3DRenderer(props.plan.concept);
+  const visualMetadata = createExperimentVisualMetadata({
+    activeStep: props.viewerState.activeStep,
+    concept: props.plan.concept,
+    displayLayers: props.viewerState.displayLayers,
+    requestedRoles: props.viewerState.focusedRoles,
+  });
 
   return (
     <section
       aria-label="3D Experiment Viewer"
       className="experiment-3d-viewer"
       data-active-step={props.viewerState.activeStep}
+      data-available-roles={visualMetadata.availableRoles.join(",")}
       data-concept={props.plan.concept}
-      data-focused-roles={props.viewerState.focusedRoles.join(",")}
+      data-display-layers={visualMetadata.displayLayerKey}
+      data-focus-key={visualMetadata.focusKey}
+      data-focused-roles={visualMetadata.focusedRoles.join(",")}
       data-testid="experiment-3d-viewer"
     >
       <div className="experiment-3d-viewer__header">
@@ -40,7 +50,7 @@ export function Experiment3DViewer(props: {
               plan={props.plan as never}
               playback={props.playback}
               registerObject={() => undefined}
-              viewerState={props.viewerState}
+              viewerState={{ ...props.viewerState, focusedRoles: visualMetadata.focusedRoles }}
             />
           ) : (
             <mesh>

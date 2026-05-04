@@ -12,6 +12,7 @@ import { ExperimentPlaybackControls, useExperimentPlayback } from "./experiment-
 import type { LessonStepId } from "./lesson-flow";
 import { createLessonFlow } from "./lesson-flow";
 import { LessonRail } from "./LessonRail";
+import { deriveFocusedRoles } from "./three/derived-visuals";
 import type { ExperimentPlaybackState, ExperimentViewerState } from "./three/types";
 
 const GenericTemplateExperiment = React.lazy(() => import("./GenericTemplateExperiment"));
@@ -123,7 +124,7 @@ function ThreeCourseLabWorkspace(props: {
         measurements={props.measurements}
         onStepChange={(stepId, nextFocusedRoles) => {
           setActiveLessonStep(stepId);
-          setFocusedRoles(nextFocusedRoles as ExperimentViewerState["focusedRoles"]);
+          setFocusedRoles(deriveFocusedRoles(props.planned.plan.concept, nextFocusedRoles));
         }}
         onVariation={(variables) => {
           props.onVariablesChange(variables);
