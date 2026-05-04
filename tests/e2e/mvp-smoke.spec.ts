@@ -157,6 +157,7 @@ test("authenticated browser flow can generate every built-in experiment", async 
     const experimentPanel = page.getByRole("region", { name: "Generated Experiment" });
     await expect(experimentPanel.getByRole("heading", { name: experimentTitle })).toBeVisible();
     await expect(experimentPanel.getByRole("button", { name: "Play Experiment" })).toBeVisible();
+    await expect(experimentPanel.locator('.experiment-diagram circle[fill="#f4f7fb"]')).toHaveCount(0);
     if (chipLabel === "Pendulum") {
       const pendulumGeometry = await experimentPanel.locator(".experiment-diagram").evaluate((diagram) => {
         const circles = Array.from(diagram.querySelectorAll("circle"));
@@ -173,6 +174,26 @@ test("authenticated browser flow can generate every built-in experiment", async 
         circleCount: 1,
         markerFill: "#5fc7ff",
         markerRadius: "18",
+      });
+    }
+    if (chipLabel === "Circular motion") {
+      const circularGeometry = await experimentPanel.locator(".experiment-diagram").evaluate((diagram) => {
+        const filledCircles = Array.from(diagram.querySelectorAll("circle")).filter(
+          (circle) => circle.getAttribute("fill") !== "none",
+        );
+        const marker = diagram.querySelector('[data-testid="experiment-motion-marker"]');
+
+        return {
+          filledCircleCount: filledCircles.length,
+          markerFill: marker?.getAttribute("fill"),
+          markerRadius: marker?.getAttribute("r"),
+        };
+      });
+
+      expect(circularGeometry).toEqual({
+        filledCircleCount: 1,
+        markerFill: "#7c88ff",
+        markerRadius: "14",
       });
     }
     await experimentPanel.getByRole("button", { name: "Play Experiment" }).click();

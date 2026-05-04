@@ -532,6 +532,76 @@ describe("InclinedPlaneExperiment", () => {
     expect(marker.getAttribute("r")).toBe("18");
   });
 
+  test("renders circular motion with one moving orbiting body", async () => {
+    const { container } = render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={genericPlan(
+          "circular_motion",
+          { radiusM: 3, speedMps: 12, massKg: 2 },
+          { angularSpeedRadps: 4, centripetalAccelMps2: 48, centripetalForceN: 96, periodS: 1.57 },
+        )}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    const marker = await screen.findByTestId("experiment-motion-marker");
+    const filledCircles = Array.from(container.querySelectorAll(".experiment-diagram circle")).filter(
+      (circle) => circle.getAttribute("fill") !== "none",
+    );
+
+    expect(marker.tagName.toLowerCase()).toBe("circle");
+    expect(filledCircles).toHaveLength(1);
+    expect(marker.getAttribute("fill")).toBe("#7c88ff");
+    expect(marker.getAttribute("r")).toBe("14");
+  });
+
+  test.each([
+    ["elastic_collision", { mass1Kg: 1, mass2Kg: 2, velocity1Mps: 6, velocity2Mps: -1 }, { finalVelocity1Mps: -3.33, finalVelocity2Mps: 3.67, totalMomentumKgMps: 4, totalKineticEnergyJ: 19 }],
+    ["work_energy", { forceN: 25, distanceM: 4, angleDeg: 0, massKg: 2 }, { workJ: 100, kineticEnergyGainJ: 100, finalSpeedMps: 10 }],
+  ] as const)("renders %s motion as an experiment object instead of a white ball", async (concept, variables, measurements) => {
+    const { container } = render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={genericPlan(concept, variables, measurements)}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    const marker = await screen.findByTestId("experiment-motion-marker");
+
+    expect(marker.tagName.toLowerCase()).toBe("rect");
+    expect(container.querySelector('.experiment-diagram circle[fill="#f4f7fb"]')).toBeNull();
+  });
+
+  test.each([
+    ["pendulum", { lengthM: 2, gravityMps2: 9.81, amplitudeDeg: 24, massKg: 1 }, { periodS: 2.85, frequencyHz: 0.35, maxSpeedMps: 1.87, tensionAtBottomN: 11.56 }],
+    ["circular_motion", { radiusM: 3, speedMps: 12, massKg: 2 }, { angularSpeedRadps: 4, centripetalAccelMps2: 48, centripetalForceN: 96, periodS: 1.57 }],
+    ["elastic_collision", { mass1Kg: 1, mass2Kg: 2, velocity1Mps: 6, velocity2Mps: -1 }, { finalVelocity1Mps: -3.33, finalVelocity2Mps: 3.67, totalMomentumKgMps: 4, totalKineticEnergyJ: 19 }],
+    ["buoyancy", { objectVolumeL: 4, objectMassKg: 2, fluidDensityKgM3: 1000 }, { buoyantForceN: 39.24, weightN: 19.62, netForceN: 19.62, willFloat: true }],
+    ["lever_balance", { leftMassKg: 4, rightMassKg: 3, leftArmM: 1.2, rightArmM: 1.6 }, { leftTorqueNm: 47.09, rightTorqueNm: 47.09, netTorqueNm: 0, balance: "balanced" }],
+    ["ohms_law", { voltageV: 12, resistanceOhm: 6 }, { currentA: 2, powerW: 24, conductanceS: 0.17 }],
+    ["ideal_gas", { molesMol: 1, temperatureK: 300, volumeL: 24 }, { pressureKpa: 103.92, pressureAtm: 1.03, thermalEnergyJ: 3741.3 }],
+    ["work_energy", { forceN: 25, distanceM: 4, angleDeg: 0, massKg: 2 }, { workJ: 100, kineticEnergyGainJ: 100, finalSpeedMps: 10 }],
+    ["wave_speed", { frequencyHz: 5, wavelengthM: 2, amplitudeM: 0.3 }, { speedMps: 10, periodS: 0.2, angularFrequencyRadps: 31.42 }],
+    ["refraction", { incidentAngleDeg: 30, refractiveIndex1: 1, refractiveIndex2: 1.5 }, { refractedAngleDeg: 19.47, criticalAngleDeg: null, speedRatio: 0.67, totalInternalReflection: false }],
+    ["lens_imaging", { focalLengthCm: 10, objectDistanceCm: 30, objectHeightCm: 4 }, { imageDistanceCm: 15, magnification: -0.5, imageHeightCm: -2, imageType: "real_inverted" }],
+    ["coulombs_law", { charge1MicroC: 2, charge2MicroC: -3, distanceM: 0.5 }, { forceN: 0.22, potentialEnergyJ: -0.11, interaction: "attraction" }],
+    ["rc_circuit", { voltageV: 9, resistanceOhm: 1000, capacitanceMicroF: 100, timeMs: 100 }, { timeConstantMs: 100, capacitorVoltageV: 5.69, currentA: 0.0033, chargeMicroC: 568.91 }],
+  ] as const)("does not render an extra white marker artifact for %s", async (concept, variables, measurements) => {
+    const { container } = render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={genericPlan(concept, variables, measurements)}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    await screen.findByTestId("experiment-motion-marker");
+
+    expect(container.querySelector('.experiment-diagram circle[fill="#f4f7fb"]')).toBeNull();
+  });
+
   test.each([
     [
       "pendulum",

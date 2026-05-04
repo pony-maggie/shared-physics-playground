@@ -524,6 +524,19 @@ function motionPoint(
   return { x: 82 + 156 * progress, y: 95 };
 }
 
+function motionMarkerAttributes(
+  diagram: GenericTemplateConfig["diagram"],
+  playback: ExperimentPlayback,
+  variables: Record<string, number>,
+) {
+  return {
+    "data-motion-signature": motionSignature(diagram, variables),
+    "data-progress": String(playback.progressPercent),
+    "data-running": String(playback.isRunning),
+    "data-testid": "experiment-motion-marker",
+  };
+}
+
 function MotionMarker(props: {
   accent: string;
   diagram: GenericTemplateConfig["diagram"];
@@ -531,12 +544,7 @@ function MotionMarker(props: {
   variables: Record<string, number>;
 }) {
   const point = motionPoint(props.diagram, props.playback.progress, props.variables);
-  const markerProps = {
-    "data-motion-signature": motionSignature(props.diagram, props.variables),
-    "data-progress": String(props.playback.progressPercent),
-    "data-running": String(props.playback.isRunning),
-    "data-testid": "experiment-motion-marker",
-  };
+  const markerProps = motionMarkerAttributes(props.diagram, props.playback, props.variables);
 
   if (props.diagram === "fluid") {
     return (
@@ -554,12 +562,44 @@ function MotionMarker(props: {
     );
   }
 
+  if (props.diagram === "collision") {
+    return (
+      <rect
+        x={point.x - 24}
+        y={point.y - 19}
+        width="48"
+        height="38"
+        rx="6"
+        fill={props.accent}
+        stroke="#07121f"
+        strokeWidth="2"
+        {...markerProps}
+      />
+    );
+  }
+
+  if (props.diagram === "work") {
+    return (
+      <rect
+        x={point.x - 31}
+        y={point.y - 22}
+        width="62"
+        height="44"
+        rx="6"
+        fill="#5fc7ff"
+        stroke="#07121f"
+        strokeWidth="2"
+        {...markerProps}
+      />
+    );
+  }
+
   return (
     <circle
       cx={point.x}
       cy={point.y}
       r="8"
-      fill="#f4f7fb"
+      fill={props.accent}
       stroke="#07121f"
       strokeWidth="2"
       {...markerProps}
@@ -596,22 +636,28 @@ function GenericTemplateDiagram(props: {
           fill={props.config.accent}
           stroke="#07121f"
           strokeWidth="2"
-          data-motion-signature={motionSignature(props.config.diagram, props.variables)}
-          data-progress={String(props.playback.progressPercent)}
-          data-running={String(props.playback.isRunning)}
-          data-testid="experiment-motion-marker"
+          {...motionMarkerAttributes(props.config.diagram, props.playback, props.variables)}
         />
       </svg>
     );
   }
 
   if (props.config.diagram === "circle") {
+    const orbitingBody = motionPoint("circle", props.playback.progress, props.variables);
+
     return (
       <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
         <circle cx="160" cy="90" r="58" fill="none" stroke="#7c88ff" strokeWidth="5" />
-        <circle cx="218" cy="90" r="14" fill={props.config.accent} />
-        <line x1="160" x2="218" y1="90" y2="90" stroke="#344054" strokeWidth="3" />
-        {marker}
+        <line x1="160" x2={orbitingBody.x} y1="90" y2={orbitingBody.y} stroke="#344054" strokeWidth="3" />
+        <circle
+          cx={orbitingBody.x}
+          cy={orbitingBody.y}
+          r="14"
+          fill={props.config.accent}
+          stroke="#07121f"
+          strokeWidth="2"
+          {...motionMarkerAttributes(props.config.diagram, props.playback, props.variables)}
+        />
       </svg>
     );
   }
@@ -620,7 +666,6 @@ function GenericTemplateDiagram(props: {
     return (
       <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
         <line x1="40" x2="280" y1="125" y2="125" stroke="#344054" strokeWidth="3" />
-        <rect x="85" y="82" width="48" height="38" rx="6" fill={props.config.accent} />
         <rect x="190" y="76" width="62" height="44" rx="6" fill="#5fc7ff" />
         <path d="M 143 100 L 175 100" stroke="#f4f7fb" strokeWidth="4" strokeLinecap="round" />
         {marker}
@@ -639,13 +684,39 @@ function GenericTemplateDiagram(props: {
   }
 
   if (props.config.diagram === "lever") {
+    const leftTorque =
+      variableValue(props.variables, "leftMassKg", 4) * variableValue(props.variables, "leftArmM", 1.2);
+    const rightTorque =
+      variableValue(props.variables, "rightMassKg", 3) * variableValue(props.variables, "rightArmM", 1.6);
+    const tilt = clamp((leftTorque - rightTorque) / Math.max(leftTorque + rightTorque, 1), -1, 1);
+    const phase = props.playback.progress * Math.PI * 2;
+    const angle = tilt * 0.22 + 0.035 * Math.sin(phase);
+    const halfBeam = 90;
+    const left = {
+      x: 160 - halfBeam * Math.cos(angle),
+      y: 92 + halfBeam * Math.sin(angle),
+    };
+    const right = {
+      x: 160 + halfBeam * Math.cos(angle),
+      y: 92 - halfBeam * Math.sin(angle),
+    };
+
     return (
       <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
         <polygon points="160,92 135,145 185,145" fill="#344054" />
-        <line x1="70" x2="250" y1="92" y2="92" stroke="#7c88ff" strokeWidth="8" strokeLinecap="round" />
-        <circle cx="95" cy="112" r="17" fill={props.config.accent} />
-        <circle cx="225" cy="112" r="17" fill="#5fc7ff" />
-        {marker}
+        <g {...motionMarkerAttributes(props.config.diagram, props.playback, props.variables)}>
+          <line
+            x1={left.x}
+            x2={right.x}
+            y1={left.y}
+            y2={right.y}
+            stroke="#7c88ff"
+            strokeWidth="8"
+            strokeLinecap="round"
+          />
+          <circle cx={left.x} cy={left.y + 20} r="17" fill={props.config.accent} stroke="#07121f" strokeWidth="2" />
+          <circle cx={right.x} cy={right.y + 20} r="17" fill="#5fc7ff" stroke="#07121f" strokeWidth="2" />
+        </g>
       </svg>
     );
   }
@@ -663,12 +734,82 @@ function GenericTemplateDiagram(props: {
   }
 
   if (props.config.diagram === "work") {
+    const block = motionPoint("work", props.playback.progress, props.variables);
+
     return (
       <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
         <line x1="62" x2="270" y1="130" y2="130" stroke="#344054" strokeWidth="3" />
-        <rect x="118" y="86" width="62" height="44" rx="6" fill="#5fc7ff" />
-        <path d="M 190 108 H 248" stroke={props.config.accent} strokeWidth="6" strokeLinecap="round" />
-        <path d="M 248 108 L 232 96 M 248 108 L 232 120" stroke={props.config.accent} strokeWidth="6" strokeLinecap="round" />
+        {marker}
+        <path
+          d={`M ${block.x + 34} ${block.y} H ${Math.min(block.x + 92, 278)}`}
+          stroke={props.config.accent}
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        <path
+          d={`M ${Math.min(block.x + 92, 278)} ${block.y} L ${Math.min(block.x + 76, 262)} ${block.y - 12} M ${Math.min(block.x + 92, 278)} ${block.y} L ${Math.min(block.x + 76, 262)} ${block.y + 12}`}
+          stroke={props.config.accent}
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (props.config.diagram === "gas") {
+    const molecule = motionPoint("gas", props.playback.progress, props.variables);
+
+    return (
+      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
+        <rect x="78" y="45" width="164" height="98" rx="12" fill="none" stroke="#7c88ff" strokeWidth="5" />
+        <circle cx="122" cy="76" r="7" fill="#5fc7ff" />
+        <circle cx="188" cy="116" r="8" fill="#9ef0b8" />
+        <circle
+          cx={molecule.x}
+          cy={molecule.y}
+          r="8"
+          fill={props.config.accent}
+          stroke="#07121f"
+          strokeWidth="2"
+          {...motionMarkerAttributes(props.config.diagram, props.playback, props.variables)}
+        />
+      </svg>
+    );
+  }
+
+  if (props.config.diagram === "charges") {
+    const movingCharge = motionPoint("charges", props.playback.progress, props.variables);
+    const charge1 = variableValue(props.variables, "charge1MicroC", 1);
+    const charge2 = variableValue(props.variables, "charge2MicroC", -1);
+    const charge1Sign = charge1 >= 0 ? "+" : "-";
+    const charge2Sign = charge2 >= 0 ? "+" : "-";
+
+    return (
+      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
+        <circle
+          cx={movingCharge.x}
+          cy={movingCharge.y}
+          r="28"
+          fill="#5fc7ff"
+          stroke="#07121f"
+          strokeWidth="2"
+          {...motionMarkerAttributes(props.config.diagram, props.playback, props.variables)}
+        />
+        <circle cx="215" cy="90" r="28" fill={props.config.accent} stroke="#07121f" strokeWidth="2" />
+        <line x1={movingCharge.x + 30} x2="185" y1={movingCharge.y} y2="90" stroke="#f4f7fb" strokeWidth="4" strokeLinecap="round" />
+        <text x={movingCharge.x - 6} y={movingCharge.y + 8} fill="#07121f" fontSize="24">{charge1Sign}</text>
+        <text x="209" y="98" fill="#07121f" fontSize="24">{charge2Sign}</text>
+      </svg>
+    );
+  }
+
+  if (props.config.diagram === "rc") {
+    return (
+      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
+        <path d="M 70 60 H 250 V 125 H 70 Z" fill="none" stroke="#7c88ff" strokeWidth="5" />
+        <path d="M 118 60 h 10 l 7 -10 l 14 20 l 14 -20 l 7 10 h 10" fill="none" stroke={props.config.accent} strokeWidth="4" />
+        <line x1="215" x2="215" y1="45" y2="78" stroke="#f4f7fb" strokeWidth="4" />
+        <line x1="225" x2="225" y1="45" y2="78" stroke="#f4f7fb" strokeWidth="4" />
         {marker}
       </svg>
     );
@@ -702,31 +843,6 @@ function GenericTemplateDiagram(props: {
         <path d="M 160 38 C 185 65 185 115 160 142 C 135 115 135 65 160 38 Z" fill="none" stroke={props.config.accent} strokeWidth="5" />
         <line x1="90" x2="90" y1="90" y2="45" stroke="#5fc7ff" strokeWidth="5" />
         <line x1="220" x2="220" y1="90" y2="120" stroke="#ffbf5f" strokeWidth="5" />
-        {marker}
-      </svg>
-    );
-  }
-
-  if (props.config.diagram === "charges") {
-    return (
-      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
-        <circle cx="105" cy="90" r="28" fill="#5fc7ff" />
-        <circle cx="215" cy="90" r="28" fill={props.config.accent} />
-        <line x1="135" x2="185" y1="90" y2="90" stroke="#f4f7fb" strokeWidth="4" strokeLinecap="round" />
-        <text x="99" y="98" fill="#07121f" fontSize="24">+</text>
-        <text x="209" y="98" fill="#07121f" fontSize="24">-</text>
-        {marker}
-      </svg>
-    );
-  }
-
-  if (props.config.diagram === "rc") {
-    return (
-      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={props.title}>
-        <path d="M 70 60 H 250 V 125 H 70 Z" fill="none" stroke="#7c88ff" strokeWidth="5" />
-        <path d="M 118 60 h 10 l 7 -10 l 14 20 l 14 -20 l 7 10 h 10" fill="none" stroke={props.config.accent} strokeWidth="4" />
-        <line x1="215" x2="215" y1="45" y2="78" stroke="#f4f7fb" strokeWidth="4" />
-        <line x1="225" x2="225" y1="45" y2="78" stroke="#f4f7fb" strokeWidth="4" />
         {marker}
       </svg>
     );
