@@ -35,6 +35,12 @@ const budgets = [
     required: false,
   },
   {
+    label: "Experiment3DViewer",
+    pattern: /^Experiment3DViewer-[\w-]+\.js$/,
+    maxKb: 260,
+    required: false,
+  },
+  {
     label: "PlaygroundCanvas",
     pattern: /^PlaygroundCanvas-[\w-]+\.js$/,
     maxKb: 230,
@@ -50,6 +56,12 @@ const budgets = [
     label: "realtime-vendor",
     pattern: /^realtime-vendor-[\w-]+\.js$/,
     maxKb: 160,
+    required: false,
+  },
+  {
+    label: "react-three-vendor",
+    pattern: /^react-three-vendor-[\w-]+\.js$/,
+    maxKb: 430,
     required: false,
   },
   {
@@ -72,8 +84,28 @@ const budgets = [
   },
 ];
 
-const forbiddenHtmlPreloads = ["ExperimentPromptCloud", "GenericTemplateExperiment", "PricingPage", "PlaygroundCanvas", "realtime-vendor", "three-core", "react-three"];
-const forbiddenEntryStaticImports = ["ExperimentPromptCloud", "GenericTemplateExperiment", "PricingPage", "PlaygroundCanvas", "realtime-vendor", "three-core", "react-three"];
+const forbiddenHtmlPreloads = [
+  "ExperimentPromptCloud",
+  "GenericTemplateExperiment",
+  "PricingPage",
+  "Experiment3DViewer",
+  "PlaygroundCanvas",
+  "realtime-vendor",
+  "three-core",
+  "react-three",
+  "react-three-vendor",
+];
+const forbiddenEntryStaticImports = [
+  "ExperimentPromptCloud",
+  "GenericTemplateExperiment",
+  "PricingPage",
+  "Experiment3DViewer",
+  "PlaygroundCanvas",
+  "realtime-vendor",
+  "three-core",
+  "react-three",
+  "react-three-vendor",
+];
 const failures = [];
 
 function kb(bytes) {

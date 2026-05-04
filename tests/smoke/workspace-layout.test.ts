@@ -103,4 +103,18 @@ describe('workspace layout', () => {
       expect(i18nSource).not.toContain(legacyCopy);
     }
   });
+
+  it('protects the full 3D course lab as a lazy viewer architecture', () => {
+    const packageJson = readJson('apps/web/package.json') as {
+      dependencies?: Record<string, string>;
+    };
+    const buildGuardrail = readFileSync(join(root, 'scripts/check-web-build.mjs'), 'utf8');
+
+    expect(packageJson.dependencies).toHaveProperty('three');
+    expect(packageJson.dependencies).toHaveProperty('@react-three/fiber');
+    expect(packageJson.dependencies).toHaveProperty('@react-three/drei');
+    expect(buildGuardrail).toContain('Experiment3DViewer');
+    expect(buildGuardrail).toContain('three-core');
+    expect(buildGuardrail).toContain('index.html must not modulepreload');
+  });
 });
