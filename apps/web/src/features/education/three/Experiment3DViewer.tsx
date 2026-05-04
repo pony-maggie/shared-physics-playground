@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 
 import type { SimulationPlan } from "../../../../../../packages/prompt-contracts/src/simulation-spec";
 import type { Language } from "../../../state/auth-store";
+import { getExperiment3DRenderer } from "./renderers";
 import type { ExperimentPlaybackState, ExperimentViewerState } from "./types";
 
 export function Experiment3DViewer(props: {
@@ -12,6 +13,8 @@ export function Experiment3DViewer(props: {
   playback: ExperimentPlaybackState;
   viewerState: ExperimentViewerState;
 }) {
+  const Renderer = getExperiment3DRenderer(props.plan.concept);
+
   return (
     <section
       aria-label="3D Experiment Viewer"
@@ -30,10 +33,21 @@ export function Experiment3DViewer(props: {
           <ambientLight intensity={0.8} />
           <directionalLight intensity={1.2} position={[3, 5, 4]} />
           <gridHelper args={[8, 8]} />
-          <mesh>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color="#5fc7ff" />
-          </mesh>
+          {Renderer ? (
+            <Renderer
+              language={props.language}
+              measurements={props.measurements}
+              plan={props.plan as never}
+              playback={props.playback}
+              registerObject={() => undefined}
+              viewerState={props.viewerState}
+            />
+          ) : (
+            <mesh>
+              <boxGeometry args={[1, 1, 1]} />
+              <meshStandardMaterial color="#5fc7ff" />
+            </mesh>
+          )}
           <OrbitControls enablePan={false} />
         </Canvas>
       </div>
