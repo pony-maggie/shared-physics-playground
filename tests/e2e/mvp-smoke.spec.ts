@@ -25,6 +25,7 @@ test("guest can try the fixed inclined-plane demo without custom generation", as
   await expect(page.getByText("斜面与摩擦")).toBeVisible();
   await expect(page.getByText(/acceleration:/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play Experiment" })).toBeVisible();
+  await expect(page.getByTestId("experiment-3d-viewer")).toBeVisible();
 
   const ball = page.getByTestId("rolling-ball");
   await expect(ball).toHaveAttribute("data-running", "false");

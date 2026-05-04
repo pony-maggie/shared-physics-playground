@@ -69,7 +69,7 @@ describe('workspace layout', () => {
     }
   });
 
-  it('does not keep legacy web stage and create modules in the focused lab', () => {
+  it('does not keep legacy web stage/create modules or realtime client code in the focused lab', () => {
     const webPackage = readJson('apps/web/package.json') as {
       dependencies?: Record<string, string>;
     };
@@ -86,10 +86,7 @@ describe('workspace layout', () => {
       expect(existsSync(join(root, path))).toBe(false);
     }
 
-    expect(webPackage.dependencies).not.toHaveProperty('@react-three/drei');
-    expect(webPackage.dependencies).not.toHaveProperty('@react-three/fiber');
     expect(webPackage.dependencies).not.toHaveProperty('colyseus.js');
-    expect(webPackage.dependencies).not.toHaveProperty('three');
     for (const legacyCopy of [
       'Create Objects',
       'Create From Text',
