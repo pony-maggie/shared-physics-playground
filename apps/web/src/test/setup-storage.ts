@@ -1,3 +1,18 @@
+import React from "react";
+import { vi } from "vitest";
+
+vi.mock("@react-three/fiber", () => ({
+  Canvas: (props: { children?: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "r3f-canvas", "data-has-children": String(Boolean(props.children)) }),
+  useFrame: () => undefined,
+}));
+
+vi.mock("@react-three/drei", () => ({
+  Html: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "r3f-html" }, children),
+  OrbitControls: () => React.createElement("div", { "data-testid": "orbit-controls" }),
+}));
+
 function installMemoryStorage(target: "localStorage" | "sessionStorage") {
   const current = window[target];
 
