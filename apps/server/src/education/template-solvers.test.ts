@@ -32,6 +32,24 @@ describe("additional education template solvers", () => {
     });
   });
 
+  test("lengthens pendulum period at larger amplitudes", () => {
+    const smallAmplitude = solvePendulum({
+      lengthM: 2,
+      gravityMps2: 9.81,
+      amplitudeDeg: 5,
+      massKg: 1,
+    });
+    const largeAmplitude = solvePendulum({
+      lengthM: 2,
+      gravityMps2: 9.81,
+      amplitudeDeg: 45,
+      massKg: 1,
+    });
+
+    expect(largeAmplitude.periodS).toBeGreaterThan(smallAmplitude.periodS);
+    expect(largeAmplitude.periodS).toBe(2.95);
+  });
+
   test("solves circular-motion measurements", () => {
     expect(
       solveCircularMotion({
@@ -204,7 +222,7 @@ describe("additional education template solvers", () => {
     ).toEqual({
       timeConstantMs: 100,
       capacitorVoltageV: 5.69,
-      currentA: 0,
+      currentA: 0.0033,
       chargeMicroC: 568.91,
     });
   });

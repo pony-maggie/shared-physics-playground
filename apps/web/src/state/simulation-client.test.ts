@@ -243,6 +243,41 @@ describe("simulation client", () => {
     expect(useSimulationClient.getState().planned?.measurements.periodS).toBeGreaterThan(1);
   });
 
+  test("updates damping and recomputes spring oscillator measurements", () => {
+    useSimulationClient.setState({
+      planned: {
+        plan: {
+          concept: "spring_oscillator",
+          title: "Spring oscillator",
+          objective: "Explore spring motion.",
+          variables: {
+            massKg: 1,
+            springConstantNpm: 80,
+            amplitudeM: 0.4,
+            dampingRatio: 0,
+          },
+          guidingQuestions: ["How does damping change the motion?", "When does oscillation stop?"],
+        },
+        measurements: {
+          periodS: 0.7,
+          angularFrequencyRadps: 8.94,
+          maxSpeedMps: 3.58,
+          energyJ: 6.4,
+          willOscillate: true,
+        },
+        explanation: "The spring force pulls the mass back toward equilibrium.",
+      },
+      saveStatus: { kind: "idle" },
+      status: { kind: "ready" },
+    });
+
+    useSimulationClient.getState().updateVariables({ dampingRatio: 0.8 });
+
+    expect(useSimulationClient.getState().planned?.plan.variables.dampingRatio).toBe(0.8);
+    expect(useSimulationClient.getState().planned?.measurements.periodS).toBe(1.17);
+    expect(useSimulationClient.getState().planned?.measurements.angularFrequencyRadps).toBe(5.37);
+  });
+
   test("updates generic template variables and recomputes measurements", () => {
     useSimulationClient.setState({
       planned: {
@@ -328,6 +363,38 @@ describe("simulation client", () => {
 
     expect(useSimulationClient.getState().planned?.plan.variables.frequencyHz).toBe(8);
     expect(useSimulationClient.getState().planned?.measurements.speedMps).toBe(16);
+  });
+
+  test("keeps small non-zero RC current visible when variables recompute", () => {
+    useSimulationClient.setState({
+      planned: {
+        plan: {
+          concept: "rc_circuit",
+          title: "RC circuit charging",
+          objective: "Explore capacitor charging.",
+          variables: {
+            voltageV: 9,
+            resistanceOhm: 1000,
+            capacitanceMicroF: 100,
+            timeMs: 100,
+          },
+          guidingQuestions: ["What does time constant mean?", "Why does current fall?"],
+        },
+        measurements: {
+          timeConstantMs: 100,
+          capacitorVoltageV: 5.69,
+          currentA: 0.0033,
+          chargeMicroC: 568.91,
+        },
+        explanation: "The RC time constant sets the charging rate.",
+      },
+      saveStatus: { kind: "idle" },
+      status: { kind: "ready" },
+    });
+
+    useSimulationClient.getState().updateVariables({ timeMs: 100 });
+
+    expect(useSimulationClient.getState().planned?.measurements.currentA).toBe(0.0033);
   });
 
   test("saves the current experiment with an auth token", async () => {

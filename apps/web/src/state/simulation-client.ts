@@ -221,7 +221,17 @@ type SimulationClientState = {
 };
 
 function round(value: number): number {
+  if (value !== 0 && Math.abs(value) < 0.01) {
+    return Math.round(value * 10000) / 10000;
+  }
+
   return Math.round(value * 100) / 100;
+}
+
+function pendulumAmplitudeCorrection(amplitudeDeg: number): number {
+  const amplitudeRad = (amplitudeDeg * Math.PI) / 180;
+
+  return 1 + amplitudeRad ** 2 / 16 + (11 * amplitudeRad ** 4) / 3072;
 }
 
 function isSuggestionResponse(input: unknown): input is SimulationSuggestionResponse {
@@ -276,19 +286,27 @@ function solveProjectileMotion(input: ProjectileMotionVariables): Measurements {
 }
 
 function solveSpringOscillator(input: SpringOscillatorVariables): Measurements {
-  const angularFrequency = Math.sqrt(input.springConstantNpm / input.massKg);
+  const naturalAngularFrequency = Math.sqrt(input.springConstantNpm / input.massKg);
+  const willOscillate = input.dampingRatio < 1;
+  const angularFrequency = willOscillate
+    ? naturalAngularFrequency * Math.sqrt(1 - input.dampingRatio ** 2)
+    : 0;
 
   return {
-    periodS: round((2 * Math.PI) / angularFrequency),
+    periodS: round(angularFrequency > 0 ? (2 * Math.PI) / angularFrequency : 0),
     angularFrequencyRadps: round(angularFrequency),
     maxSpeedMps: round(input.amplitudeM * angularFrequency),
     energyJ: round(0.5 * input.springConstantNpm * input.amplitudeM ** 2),
-    willOscillate: input.dampingRatio < 1,
+    willOscillate,
   };
 }
 
 function solvePendulum(input: PendulumVariables): Measurements {
-  const period = 2 * Math.PI * Math.sqrt(input.lengthM / input.gravityMps2);
+  const period =
+    2 *
+    Math.PI *
+    Math.sqrt(input.lengthM / input.gravityMps2) *
+    pendulumAmplitudeCorrection(input.amplitudeDeg);
   const amplitudeRad = (input.amplitudeDeg * Math.PI) / 180;
   const heightDrop = input.lengthM * (1 - Math.cos(amplitudeRad));
   const maxSpeed = Math.sqrt(2 * input.gravityMps2 * heightDrop);

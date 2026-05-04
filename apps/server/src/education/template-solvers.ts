@@ -15,7 +15,17 @@ import type {
 } from "../../../../packages/prompt-contracts/src/simulation-spec";
 
 function round(value: number): number {
+  if (value !== 0 && Math.abs(value) < 0.01) {
+    return Math.round(value * 10000) / 10000;
+  }
+
   return Math.round(value * 100) / 100;
+}
+
+function pendulumAmplitudeCorrection(amplitudeDeg: number): number {
+  const amplitudeRad = (amplitudeDeg * Math.PI) / 180;
+
+  return 1 + amplitudeRad ** 2 / 16 + (11 * amplitudeRad ** 4) / 3072;
 }
 
 export type PendulumResult = {
@@ -120,7 +130,11 @@ export type AdditionalTemplateResult =
   | RcCircuitResult;
 
 export function solvePendulum(input: PendulumVariables): PendulumResult {
-  const period = 2 * Math.PI * Math.sqrt(input.lengthM / input.gravityMps2);
+  const period =
+    2 *
+    Math.PI *
+    Math.sqrt(input.lengthM / input.gravityMps2) *
+    pendulumAmplitudeCorrection(input.amplitudeDeg);
   const amplitudeRad = (input.amplitudeDeg * Math.PI) / 180;
   const heightDrop = input.lengthM * (1 - Math.cos(amplitudeRad));
   const maxSpeed = Math.sqrt(2 * input.gravityMps2 * heightDrop);

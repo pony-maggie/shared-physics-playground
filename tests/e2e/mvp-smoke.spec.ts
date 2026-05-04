@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+import { planSimulation } from "../../apps/server/src/education/simulation-planner";
+
+const AUTH_TOKEN_STORAGE_KEY = "shared-physics-playground:auth-token";
+
 test("guest can try the fixed inclined-plane demo without custom generation", async ({ page }) => {
   await page.goto("/");
 
@@ -76,4 +80,88 @@ test("focused lab shell keeps language switching", async ({ page }) => {
   await expect(page.getByText("物理游乐场")).toBeVisible();
   await expect(page.getByRole("heading", { name: "物理实验室" })).toBeVisible();
   await expect(page.getByLabel("创建提示")).toHaveCount(0);
+});
+
+test("authenticated browser flow can generate every built-in experiment", async ({ page }) => {
+  await page.addInitScript(
+    ({ storageKey }) => {
+      window.localStorage.setItem(storageKey, "browser-token");
+    },
+    { storageKey: AUTH_TOKEN_STORAGE_KEY },
+  );
+  await page.route("**/api/auth/session", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      status: 200,
+      body: JSON.stringify({
+        user: {
+          userId: "browser-user",
+          email: "browser@example.com",
+          access: {
+            tier: "pro",
+            defaultStageSlug: "browser-stage",
+            maxStages: 50,
+            maxObjectsPerStage: 10,
+            canCreateStages: true,
+            defaultRoomSlug: "browser-stage",
+            maxOwnedObjects: 10,
+            canCreateNamedRooms: true,
+          },
+        },
+      }),
+    });
+  });
+  await page.route("**/api/education/simulations/plan", async (route) => {
+    const body = route.request().postDataJSON() as {
+      question?: string;
+      selectedConcept?: string;
+    };
+    const planned = planSimulation(body.question ?? "", {
+      selectedConcept: body.selectedConcept,
+      suggestWhenUnsupported: true,
+    });
+
+    await route.fulfill({
+      contentType: "application/json",
+      status: 200,
+      body: JSON.stringify(planned),
+    });
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Sign Out" })).toBeVisible();
+
+  const experiments = [
+    ["Inclined plane", "Inclined plane and friction"],
+    ["Projectile motion", "Projectile motion"],
+    ["Spring oscillator", "Spring oscillator"],
+    ["Pendulum", "Pendulum period"],
+    ["Circular motion", "Circular motion"],
+    ["Elastic collision", "Elastic collision"],
+    ["Buoyancy", "Buoyancy and floating"],
+    ["Lever balance", "Lever balance"],
+    ["Ohm's law", "Ohm's law circuit"],
+    ["Ideal gas", "Ideal gas pressure"],
+    ["Work and energy", "Work and energy"],
+    ["Wave speed", "Wave speed"],
+    ["Refraction", "Refraction"],
+    ["Lens imaging", "Lens imaging"],
+    ["Coulomb force", "Coulomb force"],
+    ["RC circuit", "RC circuit charging"],
+  ] as const;
+
+  for (const [chipLabel, experimentTitle] of experiments) {
+    await page.getByRole("button", { name: chipLabel }).click();
+    await page.getByRole("button", { name: "Generate Experiment" }).click();
+
+    const experimentPanel = page.getByRole("region", { name: "Generated Experiment" });
+    await expect(experimentPanel.getByRole("heading", { name: experimentTitle })).toBeVisible();
+    await expect(experimentPanel.getByRole("button", { name: "Play Experiment" })).toBeVisible();
+    await experimentPanel.getByRole("button", { name: "Play Experiment" }).click();
+    await expect(experimentPanel.getByRole("button", { name: "Pause Experiment" })).toBeVisible();
+    await expect(
+      experimentPanel.locator('[data-testid="rolling-ball"], [data-testid="experiment-motion-marker"]').first(),
+    ).toHaveAttribute("data-running", "true");
+    await experimentPanel.getByRole("button", { name: "Reset Experiment" }).click();
+  }
 });
