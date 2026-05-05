@@ -408,20 +408,6 @@ export function InclinedPlaneExperiment(props: {
 
   const variables = plan.variables;
   const inclinedMeasurements = measurements as InclinedPlaneMeasurements;
-  const rampStart = { x: 40, y: 140 };
-  const rampEnd = { x: 280, y: 110 - variables.angleDeg };
-  const rampStrokeWidth = 8;
-  const ballRadius = 14;
-  const ballClearance = ballRadius + rampStrokeWidth / 2;
-  const rampDx = rampEnd.x - rampStart.x;
-  const rampDy = rampEnd.y - rampStart.y;
-  const rampLength = Math.hypot(rampDx, rampDy);
-  const surfaceNormal = {
-    x: rampDy / rampLength,
-    y: -rampDx / rampLength,
-  };
-  const ballPathStart = 0.88;
-  const ballPathEnd = 0.15;
   const animationFrameRef = useRef<number | null>(null);
   const progressRef = useRef(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -433,13 +419,6 @@ export function InclinedPlaneExperiment(props: {
 
     return Math.max(700, Math.min(5000, inclinedMeasurements.timeToBottomS * 1000));
   }, [inclinedMeasurements.timeToBottomS]);
-  const ballRampProgress = ballPathStart + (ballPathEnd - ballPathStart) * progress;
-  const ballSurfacePoint = {
-    x: rampStart.x + rampDx * ballRampProgress,
-    y: rampStart.y + rampDy * ballRampProgress,
-  };
-  const ballX = ballSurfacePoint.x + surfaceNormal.x * ballClearance;
-  const ballY = ballSurfacePoint.y + surfaceNormal.y * ballClearance;
   const progressPercent = Math.round(progress * 100);
 
   useEffect(() => {
@@ -570,28 +549,6 @@ export function InclinedPlaneExperiment(props: {
             </p>
             <p className="panel-copy">{props.planned.explanation}</p>
           </div>
-
-          <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={plan.title}>
-            <line
-              x1={rampStart.x}
-              x2={rampEnd.x}
-              y1={rampStart.y}
-              y2={rampEnd.y}
-              stroke="#7c88ff"
-              strokeLinecap="round"
-              strokeWidth={rampStrokeWidth}
-            />
-            <circle
-              cx={ballX}
-              cy={ballY}
-              data-progress={String(progressPercent)}
-              data-running={String(isRunning)}
-              data-testid="rolling-ball"
-              r={ballRadius}
-              fill="#5fc7ff"
-            />
-            <line x1="40" x2="285" y1="148" y2="148" stroke="#344054" strokeWidth="2" />
-          </svg>
 
           <div className="button-cluster experiment-playback">
             <button

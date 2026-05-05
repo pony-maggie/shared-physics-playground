@@ -84,7 +84,7 @@ describe("InclinedPlaneExperiment", () => {
     expect(onVariablesChange).toHaveBeenCalledWith({ angleDeg: 40 });
   });
 
-  test("exposes play, pause, and reset controls for rolling the ball", () => {
+  test("uses the 3D viewer as the only primary experiment stage", async () => {
     render(
       <InclinedPlaneExperiment
         language="en"
@@ -93,18 +93,32 @@ describe("InclinedPlaneExperiment", () => {
       />,
     );
 
-    expect(screen.getByTestId("rolling-ball").getAttribute("data-running")).toBe("false");
+    const viewer = await screen.findByTestId("experiment-3d-viewer");
+
+    expect(viewer.getAttribute("data-concept")).toBe("inclined_plane");
+    expect(viewer.getAttribute("data-running")).toBe("false");
+    expect(screen.queryByTestId("rolling-ball")).toBeNull();
+    expect(document.querySelector(".experiment-diagram")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Play Experiment" }));
     expect(screen.getByRole("button", { name: "Pause Experiment" })).toBeTruthy();
-    expect(screen.getByTestId("rolling-ball").getAttribute("data-running")).toBe("true");
+    expect(viewer.getAttribute("data-running")).toBe("true");
 
     fireEvent.click(screen.getByRole("button", { name: "Reset Experiment" }));
     expect(screen.getByRole("button", { name: "Play Experiment" })).toBeTruthy();
-    expect(screen.getByTestId("rolling-ball").getAttribute("data-progress")).toBe("0");
+    expect(viewer.getAttribute("data-playback-progress")).toBe("0");
   });
 
-  test("keeps the rolling ball tangent to the top of the ramp through the run", () => {
+  test("drives playback progress through the 3D viewer state", async () => {
+    render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={planned}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    const viewer = await screen.findByTestId("experiment-3d-viewer");
     vi.useFakeTimers();
     let now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => now);
@@ -115,36 +129,13 @@ describe("InclinedPlaneExperiment", () => {
       window.clearTimeout(id);
     });
 
-    render(
-      <InclinedPlaneExperiment
-        language="en"
-        planned={planned}
-        onVariablesChange={() => {}}
-      />,
-    );
-
     fireEvent.click(screen.getByRole("button", { name: "Play Experiment" }));
     now = planned.measurements.timeToBottomS * 1000;
     act(() => {
       vi.runOnlyPendingTimers();
     });
 
-    const ramp = document.querySelector(".experiment-diagram line") as SVGLineElement;
-    const ball = screen.getByTestId("rolling-ball");
-    const x1 = Number(ramp.getAttribute("x1"));
-    const y1 = Number(ramp.getAttribute("y1"));
-    const x2 = Number(ramp.getAttribute("x2"));
-    const y2 = Number(ramp.getAttribute("y2"));
-    const cx = Number(ball.getAttribute("cx"));
-    const cy = Number(ball.getAttribute("cy"));
-    const radius = Number(ball.getAttribute("r"));
-    const rampStrokeWidth = Number(ramp.getAttribute("stroke-width"));
-    const centerLineDistance =
-      Math.abs((y2 - y1) * cx - (x2 - x1) * cy + x2 * y1 - y2 * x1) /
-      Math.hypot(y2 - y1, x2 - x1);
-
-    expect(ball.getAttribute("data-progress")).toBe("100");
-    expect(centerLineDistance).toBeGreaterThanOrEqual(radius + rampStrokeWidth / 2 - 0.25);
+    expect(viewer.getAttribute("data-playback-progress")).toBe("100");
   });
 
   test("renders projectile-motion controls and measurements", () => {

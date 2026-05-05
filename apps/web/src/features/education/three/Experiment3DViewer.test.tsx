@@ -44,6 +44,10 @@ describe("Experiment3DViewer", () => {
     expect(screen.getByTestId("experiment-3d-viewer").getAttribute("data-concept")).toBe(
       "inclined_plane",
     );
+    expect(screen.getByTestId("experiment-3d-viewer").getAttribute("data-playback-progress")).toBe(
+      "0",
+    );
+    expect(screen.getByTestId("experiment-3d-viewer").getAttribute("data-running")).toBe("false");
     expect(screen.getByTestId("r3f-canvas")).toBeTruthy();
     expect(screen.getByText("Inclined plane")).toBeTruthy();
   });

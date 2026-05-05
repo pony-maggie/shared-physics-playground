@@ -25,52 +25,24 @@ test("guest can try the fixed inclined-plane demo without custom generation", as
   await expect(page.getByText("斜面与摩擦")).toBeVisible();
   await expect(page.getByText(/acceleration:/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Play Experiment" })).toBeVisible();
-  await expect(page.getByTestId("experiment-3d-viewer")).toBeVisible();
+  const viewer = page.getByTestId("experiment-3d-viewer");
+  await expect(viewer).toBeVisible();
+  await expect(viewer).toHaveAttribute("data-concept", "inclined_plane");
+  await expect(page.locator(".experiment-diagram")).toHaveCount(0);
 
-  const ball = page.getByTestId("rolling-ball");
-  await expect(ball).toHaveAttribute("data-running", "false");
+  await expect(viewer).toHaveAttribute("data-running", "false");
 
   await page.getByRole("button", { name: "Play Experiment" }).click();
   await expect(page.getByRole("button", { name: "Pause Experiment" })).toBeVisible();
-  await expect(ball).toHaveAttribute("data-running", "true");
-  await expect.poll(async () => Number(await ball.getAttribute("data-progress"))).toBeGreaterThan(0);
-  await expect.poll(async () => Number(await ball.getAttribute("data-progress")), {
+  await expect(viewer).toHaveAttribute("data-running", "true");
+  await expect.poll(async () => Number(await viewer.getAttribute("data-playback-progress"))).toBeGreaterThan(0);
+  await expect.poll(async () => Number(await viewer.getAttribute("data-playback-progress")), {
     timeout: 3000,
   }).toBe(100);
 
-  const contactGeometry = await page.locator(".experiment-diagram").evaluate((diagram) => {
-    const ramp = diagram.querySelector("line");
-    const rollingBall = diagram.querySelector('[data-testid="rolling-ball"]');
-
-    if (!ramp || !rollingBall) {
-      throw new Error("Inclined-plane geometry is missing from the experiment diagram.");
-    }
-
-    const x1 = Number(ramp.getAttribute("x1"));
-    const y1 = Number(ramp.getAttribute("y1"));
-    const x2 = Number(ramp.getAttribute("x2"));
-    const y2 = Number(ramp.getAttribute("y2"));
-    const cx = Number(rollingBall.getAttribute("cx"));
-    const cy = Number(rollingBall.getAttribute("cy"));
-    const radius = Number(rollingBall.getAttribute("r"));
-    const rampStrokeWidth = Number(ramp.getAttribute("stroke-width"));
-    const centerLineDistance =
-      Math.abs((y2 - y1) * cx - (x2 - x1) * cy + x2 * y1 - y2 * x1) /
-      Math.hypot(y2 - y1, x2 - x1);
-
-    return {
-      centerLineDistance,
-      minimumClearance: radius + rampStrokeWidth / 2,
-    };
-  });
-
-  expect(contactGeometry.centerLineDistance).toBeGreaterThanOrEqual(
-    contactGeometry.minimumClearance - 0.25,
-  );
-
   await page.getByRole("button", { name: "Reset Experiment" }).click();
   await expect(page.getByRole("button", { name: "Play Experiment" })).toBeVisible();
-  await expect(ball).toHaveAttribute("data-progress", "0");
+  await expect(viewer).toHaveAttribute("data-playback-progress", "0");
 });
 
 test("focused lab shell keeps language switching", async ({ page }) => {
@@ -158,7 +130,12 @@ test("authenticated browser flow can generate every built-in experiment", async 
     const experimentPanel = page.getByRole("region", { name: "Generated Experiment" });
     await expect(experimentPanel.getByRole("heading", { name: experimentTitle })).toBeVisible();
     await expect(experimentPanel.getByRole("button", { name: "Play Experiment" })).toBeVisible();
-    await expect(experimentPanel.locator('.experiment-diagram circle[fill="#f4f7fb"]')).toHaveCount(0);
+    if (chipLabel === "Inclined plane") {
+      await expect(experimentPanel.getByTestId("experiment-3d-viewer")).toBeVisible();
+      await expect(experimentPanel.locator(".experiment-diagram")).toHaveCount(0);
+    } else {
+      await expect(experimentPanel.locator('.experiment-diagram circle[fill="#f4f7fb"]')).toHaveCount(0);
+    }
     if (chipLabel === "Pendulum") {
       const pendulumGeometry = await experimentPanel.locator(".experiment-diagram").evaluate((diagram) => {
         const circles = Array.from(diagram.querySelectorAll("circle"));
@@ -199,9 +176,16 @@ test("authenticated browser flow can generate every built-in experiment", async 
     }
     await experimentPanel.getByRole("button", { name: "Play Experiment" }).click();
     await expect(experimentPanel.getByRole("button", { name: "Pause Experiment" })).toBeVisible();
-    await expect(
-      experimentPanel.locator('[data-testid="rolling-ball"], [data-testid="experiment-motion-marker"]').first(),
-    ).toHaveAttribute("data-running", "true");
+    if (chipLabel === "Inclined plane") {
+      await expect(experimentPanel.getByTestId("experiment-3d-viewer")).toHaveAttribute(
+        "data-running",
+        "true",
+      );
+    } else {
+      await expect(
+        experimentPanel.locator('[data-testid="rolling-ball"], [data-testid="experiment-motion-marker"]').first(),
+      ).toHaveAttribute("data-running", "true");
+    }
     await experimentPanel.getByRole("button", { name: "Reset Experiment" }).click();
   }
 });

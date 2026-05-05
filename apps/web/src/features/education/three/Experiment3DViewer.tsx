@@ -32,6 +32,8 @@ export function Experiment3DViewer(props: {
       data-display-layers={visualMetadata.displayLayerKey}
       data-focus-key={visualMetadata.focusKey}
       data-focused-roles={visualMetadata.focusedRoles.join(",")}
+      data-playback-progress={String(props.playback.progressPercent)}
+      data-running={String(props.playback.isRunning)}
       data-testid="experiment-3d-viewer"
     >
       <div className="experiment-3d-viewer__header">
