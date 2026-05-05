@@ -630,9 +630,10 @@ input {
 .full-3d-lab-workspace {
   display: grid;
   grid-template-areas:
-    "viewer lesson"
-    "tools lesson";
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+    "viewer"
+    "tools"
+    "lesson";
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -654,7 +655,7 @@ input {
 .experiment-3d-viewer {
   grid-area: viewer;
   display: grid;
-  grid-template-rows: auto minmax(460px, 1fr);
+  grid-template-rows: auto minmax(620px, 1fr);
   gap: 10px;
 }
 
@@ -665,7 +666,7 @@ input {
 
 .experiment-3d-viewer__canvas,
 .experiment-3d-fallback {
-  min-height: 460px;
+  min-height: 620px;
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -682,7 +683,6 @@ input {
 .lesson-rail {
   grid-area: lesson;
   display: grid;
-  grid-template-rows: auto 1fr;
   gap: 10px;
   padding: 12px;
   border: 1px solid var(--border-subtle);
@@ -697,14 +697,14 @@ input {
 
 .lesson-rail__steps {
   display: grid;
-  gap: 6px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .lesson-rail__step {
-  width: 100%;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 10px;
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.02);
   text-align: left;
@@ -716,7 +716,6 @@ input {
   background: var(--accent-muted);
 }
 
-.lesson-rail__body,
 .lesson-rail__measurements {
   display: grid;
   gap: 10px;
@@ -764,14 +763,23 @@ input {
   }
 
   .full-3d-lab-workspace {
-    grid-template-areas:
-      "viewer"
-      "lesson"
-      "tools";
     grid-template-columns: 1fr;
   }
 
   .experiment-tools-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .experiment-3d-viewer {
+    grid-template-rows: auto minmax(420px, 1fr);
+  }
+
+  .experiment-3d-viewer__canvas,
+  .experiment-3d-fallback {
+    min-height: 420px;
+  }
+
+  .lesson-rail__steps {
     grid-template-columns: 1fr;
   }
 

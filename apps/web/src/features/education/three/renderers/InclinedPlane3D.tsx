@@ -1,27 +1,34 @@
 import type { InclinedPlanePlan } from "../../../../../../../packages/prompt-contracts/src/simulation-spec";
 import type { Experiment3DRendererProps } from "../types";
 
+export function createInclinedPlane3DLayout(input: { angleDeg: number; progress: number }) {
+  const progress = Math.max(0, Math.min(1, input.progress));
+  const rampRotationZ = (-input.angleDeg * Math.PI) / 180;
+  const ballPosition: [number, number, number] = [-1.45 + progress * 2.9, 0.28, 0];
+
+  return {
+    ballPosition,
+    rampRotationZ,
+    showTrailLine: false,
+  };
+}
+
 export function InclinedPlane3D(props: Experiment3DRendererProps<InclinedPlanePlan>) {
-  const angleRad = (props.plan.variables.angleDeg * Math.PI) / 180;
-  const x = -1.6 + props.playback.progress * 3.2;
-  const y = 0.35 + Math.sin(angleRad) * (1 - props.playback.progress);
+  const layout = createInclinedPlane3DLayout({
+    angleDeg: props.plan.variables.angleDeg,
+    progress: props.playback.progress,
+  });
 
   return (
-    <group>
-      <mesh position={[0, 0, 0]} rotation={[0, 0, -angleRad]}>
+    <group rotation={[0, 0, layout.rampRotationZ]}>
+      <mesh position={[0, 0, 0]}>
         <boxGeometry args={[4, 0.12, 1.2]} />
         <meshStandardMaterial color="#344054" />
       </mesh>
-      <mesh position={[x, y, 0]}>
+      <mesh position={layout.ballPosition}>
         <sphereGeometry args={[0.22, 24, 24]} />
         <meshStandardMaterial color="#5fc7ff" />
       </mesh>
-      {props.viewerState.displayLayers.trails ? (
-        <mesh position={[0, 0.42, 0]}>
-          <boxGeometry args={[3.2, 0.025, 0.025]} />
-          <meshStandardMaterial color="#7c88ff" emissive="#1f2aff" emissiveIntensity={0.35} />
-        </mesh>
-      ) : null}
     </group>
   );
 }

@@ -19,50 +19,42 @@ export function LessonRail(props: {
   flow: LessonFlow;
   language: Language;
   measurements: Record<string, unknown>;
-  onStepChange: (stepId: LessonStepId, focusRoles: string[]) => void;
   onVariation: (variables: Record<string, number>) => void;
 }) {
-  const active = props.flow.steps.find((step) => step.id === props.activeStep) ?? props.flow.steps[0];
-
   return (
     <aside aria-label="Lesson Flow" className="lesson-rail">
+      <span className="panel-kicker">
+        {props.language === "zh-CN" ? "课程步骤" : "Lesson Steps"}
+      </span>
       <div className="lesson-rail__steps">
         {props.flow.steps.map((step) => (
-          <button
-            className={`lesson-rail__step${step.id === active.id ? " lesson-rail__step--active" : ""}`}
+          <section
+            className={`lesson-rail__step${step.id === props.activeStep ? " lesson-rail__step--active" : ""}`}
             key={step.id}
-            type="button"
-            onClick={() => props.onStepChange(step.id, step.focusRoles)}
           >
-            {step.title}
-          </button>
+            <h3 className="group-title">{step.title}</h3>
+            <p className="panel-copy">{step.prompt}</p>
+            {step.measurementKeys ? (
+              <dl className="lesson-rail__measurements">
+                {step.measurementKeys.map((key) => (
+                  <div key={key}>
+                    <dt className="data-label">{key}</dt>
+                    <dd className="data-value">{formatMeasurement(props.measurements[key])}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            {step.variation ? (
+              <button
+                className="tool-button tool-button--primary"
+                type="button"
+                onClick={() => props.onVariation(step.variation?.variables ?? {})}
+              >
+                {step.variation.label}
+              </button>
+            ) : null}
+          </section>
         ))}
-      </div>
-      <div className="lesson-rail__body">
-        <span className="panel-kicker">
-          {props.language === "zh-CN" ? "课程步骤" : "Lesson Step"}
-        </span>
-        <h3 className="group-title">{active.title}</h3>
-        <p className="panel-copy">{active.prompt}</p>
-        {active.measurementKeys ? (
-          <dl className="lesson-rail__measurements">
-            {active.measurementKeys.map((key) => (
-              <div key={key}>
-                <dt className="data-label">{key}</dt>
-                <dd className="data-value">{formatMeasurement(props.measurements[key])}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-        {active.variation ? (
-          <button
-            className="tool-button tool-button--primary"
-            type="button"
-            onClick={() => props.onVariation(active.variation?.variables ?? {})}
-          >
-            {active.variation.label}
-          </button>
-        ) : null}
       </div>
     </aside>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 import type { Language } from "../../state/auth-store";
 import type { PlannedSimulation } from "../../state/simulation-client";
@@ -17,10 +17,11 @@ export function ThreeCourseLabWorkspace(props: {
   playback: ExperimentPlaybackState;
   planned: PlannedSimulation;
 }) {
-  const [activeLessonStep, setActiveLessonStep] = useState<LessonStepId>("predict");
-  const [focusedRoles, setFocusedRoles] = useState<ExperimentViewerState["focusedRoles"]>([
-    "moving-object",
-  ]);
+  const activeLessonStep: LessonStepId = props.playback.isRunning
+    ? "run"
+    : props.playback.progress >= 1
+      ? "measure"
+      : "predict";
   const lessonFlow = useMemo(
     () =>
       createLessonFlow({
@@ -30,6 +31,7 @@ export function ThreeCourseLabWorkspace(props: {
       }),
     [props.language, props.measurements, props.planned.plan],
   );
+  const activeLesson = lessonFlow.steps.find((step) => step.id === activeLessonStep);
   const viewerState: ExperimentViewerState = {
     activeStep: activeLessonStep,
     cameraPreset: "default",
@@ -39,7 +41,10 @@ export function ThreeCourseLabWorkspace(props: {
       measurements: true,
       trails: true,
     },
-    focusedRoles,
+    focusedRoles: deriveFocusedRoles(
+      props.planned.plan.concept,
+      activeLesson?.focusRoles ?? ["moving-object"],
+    ),
   };
 
   return (
@@ -60,10 +65,6 @@ export function ThreeCourseLabWorkspace(props: {
         flow={lessonFlow}
         language={props.language}
         measurements={props.measurements}
-        onStepChange={(stepId, nextFocusedRoles) => {
-          setActiveLessonStep(stepId);
-          setFocusedRoles(deriveFocusedRoles(props.planned.plan.concept, nextFocusedRoles));
-        }}
         onVariation={(variables) => {
           props.onVariablesChange(variables);
           props.playback.reset();

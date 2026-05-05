@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, test, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { LessonFlow } from "./lesson-flow";
 import { LessonRail } from "./LessonRail";
@@ -32,24 +32,29 @@ const flow: LessonFlow = {
   ],
 };
 
-describe("LessonRail", () => {
-  test("changes active step and reports focused roles", () => {
-    const onStepChange = vi.fn();
+afterEach(() => {
+  cleanup();
+});
 
+describe("LessonRail", () => {
+  test("renders lesson steps as static guidance instead of navigation buttons", () => {
     render(
       <LessonRail
         activeStep="predict"
         flow={flow}
         language="en"
         measurements={{ speed: 4.2 }}
-        onStepChange={onStepChange}
         onVariation={() => undefined}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Measure" }));
-
-    expect(onStepChange).toHaveBeenCalledWith("measure", ["measurement-line"]);
+    expect(screen.queryByRole("button", { name: "Predict" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Run" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Measure" })).toBeNull();
+    expect(screen.getByText("Predict it.")).toBeTruthy();
+    expect(screen.getByText("Run it.")).toBeTruthy();
+    expect(screen.getByText("Measure it.")).toBeTruthy();
+    expect(screen.getByText("4.2")).toBeTruthy();
   });
 
   test("applies a variation from the Try step", () => {
@@ -61,7 +66,6 @@ describe("LessonRail", () => {
         flow={flow}
         language="en"
         measurements={{ speed: 4.2 }}
-        onStepChange={() => undefined}
         onVariation={onVariation}
       />,
     );
