@@ -105,87 +105,41 @@ test("authenticated browser flow can generate every built-in experiment", async 
   await expect(page.getByRole("button", { name: "Sign Out" })).toBeVisible();
 
   const experiments = [
-    ["Inclined plane", "Inclined plane and friction"],
-    ["Projectile motion", "Projectile motion"],
-    ["Spring oscillator", "Spring oscillator"],
-    ["Pendulum", "Pendulum period"],
-    ["Circular motion", "Circular motion"],
-    ["Elastic collision", "Elastic collision"],
-    ["Buoyancy", "Buoyancy and floating"],
-    ["Lever balance", "Lever balance"],
-    ["Ohm's law", "Ohm's law circuit"],
-    ["Ideal gas", "Ideal gas pressure"],
-    ["Work and energy", "Work and energy"],
-    ["Wave speed", "Wave speed"],
-    ["Refraction", "Refraction"],
-    ["Lens imaging", "Lens imaging"],
-    ["Coulomb force", "Coulomb force"],
-    ["RC circuit", "RC circuit charging"],
+    ["Inclined plane", "Inclined plane and friction", "inclined_plane"],
+    ["Projectile motion", "Projectile motion", "projectile_motion"],
+    ["Spring oscillator", "Spring oscillator", "spring_oscillator"],
+    ["Pendulum", "Pendulum period", "pendulum"],
+    ["Circular motion", "Circular motion", "circular_motion"],
+    ["Elastic collision", "Elastic collision", "elastic_collision"],
+    ["Buoyancy", "Buoyancy and floating", "buoyancy"],
+    ["Lever balance", "Lever balance", "lever_balance"],
+    ["Ohm's law", "Ohm's law circuit", "ohms_law"],
+    ["Ideal gas", "Ideal gas pressure", "ideal_gas"],
+    ["Work and energy", "Work and energy", "work_energy"],
+    ["Wave speed", "Wave speed", "wave_speed"],
+    ["Refraction", "Refraction", "refraction"],
+    ["Lens imaging", "Lens imaging", "lens_imaging"],
+    ["Coulomb force", "Coulomb force", "coulombs_law"],
+    ["RC circuit", "RC circuit charging", "rc_circuit"],
   ] as const;
 
-  for (const [chipLabel, experimentTitle] of experiments) {
+  for (const [chipLabel, experimentTitle, concept] of experiments) {
     await page.getByRole("button", { name: chipLabel }).click();
     await page.getByRole("button", { name: "Generate Experiment" }).click();
 
     const experimentPanel = page.getByRole("region", { name: "Generated Experiment" });
-    await expect(experimentPanel.getByRole("heading", { name: experimentTitle })).toBeVisible();
+    await expect(experimentPanel.getByRole("heading", { name: experimentTitle }).first()).toBeVisible();
     await expect(experimentPanel.getByRole("button", { name: "Play Experiment" })).toBeVisible();
-    if (chipLabel === "Inclined plane") {
-      await expect(experimentPanel.getByTestId("experiment-3d-viewer")).toBeVisible();
-      await expect(experimentPanel.locator(".experiment-diagram")).toHaveCount(0);
-    } else {
-      await expect(experimentPanel.locator('.experiment-diagram circle[fill="#f4f7fb"]')).toHaveCount(0);
-    }
-    if (chipLabel === "Pendulum") {
-      const pendulumGeometry = await experimentPanel.locator(".experiment-diagram").evaluate((diagram) => {
-        const circles = Array.from(diagram.querySelectorAll("circle"));
-        const marker = diagram.querySelector('[data-testid="experiment-motion-marker"]');
+    const viewer = experimentPanel.getByTestId("experiment-3d-viewer");
+    await expect(viewer).toBeVisible();
+    await expect(viewer).toHaveAttribute("data-concept", concept);
+    await expect(experimentPanel.locator(".experiment-diagram")).toHaveCount(0);
+    await expect(experimentPanel.locator('[data-testid="experiment-motion-marker"]')).toHaveCount(0);
+    await expect(experimentPanel.getByRole("button", { name: "Change angle" })).toHaveCount(0);
 
-        return {
-          circleCount: circles.length,
-          markerFill: marker?.getAttribute("fill"),
-          markerRadius: marker?.getAttribute("r"),
-        };
-      });
-
-      expect(pendulumGeometry).toEqual({
-        circleCount: 1,
-        markerFill: "#5fc7ff",
-        markerRadius: "18",
-      });
-    }
-    if (chipLabel === "Circular motion") {
-      const circularGeometry = await experimentPanel.locator(".experiment-diagram").evaluate((diagram) => {
-        const filledCircles = Array.from(diagram.querySelectorAll("circle")).filter(
-          (circle) => circle.getAttribute("fill") !== "none",
-        );
-        const marker = diagram.querySelector('[data-testid="experiment-motion-marker"]');
-
-        return {
-          filledCircleCount: filledCircles.length,
-          markerFill: marker?.getAttribute("fill"),
-          markerRadius: marker?.getAttribute("r"),
-        };
-      });
-
-      expect(circularGeometry).toEqual({
-        filledCircleCount: 1,
-        markerFill: "#7c88ff",
-        markerRadius: "14",
-      });
-    }
     await experimentPanel.getByRole("button", { name: "Play Experiment" }).click();
     await expect(experimentPanel.getByRole("button", { name: "Pause Experiment" })).toBeVisible();
-    if (chipLabel === "Inclined plane") {
-      await expect(experimentPanel.getByTestId("experiment-3d-viewer")).toHaveAttribute(
-        "data-running",
-        "true",
-      );
-    } else {
-      await expect(
-        experimentPanel.locator('[data-testid="rolling-ball"], [data-testid="experiment-motion-marker"]').first(),
-      ).toHaveAttribute("data-running", "true");
-    }
+    await expect(viewer).toHaveAttribute("data-running", "true");
     await experimentPanel.getByRole("button", { name: "Reset Experiment" }).click();
   }
 });

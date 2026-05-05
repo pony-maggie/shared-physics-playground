@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { t } from "../../i18n";
 import type { Language } from "../../state/auth-store";
+import type { ExperimentPlaybackState } from "./three/types";
 
 export type ExperimentPlayback = {
   isRunning: boolean;
@@ -101,4 +102,23 @@ export function ExperimentPlaybackControls(props: {
       </span>
     </div>
   );
+}
+
+export function createExperimentViewerPlayback(playback: ExperimentPlayback): ExperimentPlaybackState {
+  return {
+    isRunning: playback.isRunning,
+    pause: () => {
+      if (playback.isRunning) {
+        playback.toggle();
+      }
+    },
+    play: () => {
+      if (!playback.isRunning) {
+        playback.toggle();
+      }
+    },
+    progress: playback.progress,
+    progressPercent: playback.progressPercent,
+    reset: playback.reset,
+  };
 }

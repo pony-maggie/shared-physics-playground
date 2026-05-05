@@ -9,10 +9,6 @@ export function ProjectileMotion3D(props: Experiment3DRendererProps<ProjectileMo
 
   return (
     <group>
-      <mesh position={[-2.2, 0.12, 0]}>
-        <boxGeometry args={[0.35, 0.24, 0.35]} />
-        <meshStandardMaterial color="#9ef0b8" />
-      </mesh>
       {props.viewerState.displayLayers.trails ? (
         <mesh position={[0, 1.1, 0]}>
           <torusGeometry args={[1.65, 0.012, 8, 48, Math.PI]} />

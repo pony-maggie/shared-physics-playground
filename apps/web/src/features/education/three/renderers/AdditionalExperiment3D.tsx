@@ -15,18 +15,27 @@ import type {
 } from "../../../../../../../packages/prompt-contracts/src/simulation-spec";
 import type { Experiment3DRendererProps } from "../types";
 
+function shouldShowMeasurementLine(props: Experiment3DRendererProps): boolean {
+  return (
+    props.viewerState.displayLayers.measurements &&
+    props.viewerState.focusedRoles.includes("measurement-line")
+  );
+}
+
 function MeasurementBar(props: {
   color?: string;
   length: number;
   position: [number, number, number];
   rotation?: [number, number, number];
 }) {
+  const color = props.color ?? "#8fa3b8";
+
   return (
     <mesh position={props.position} rotation={props.rotation}>
       <boxGeometry args={[props.length, 0.025, 0.025]} />
       <meshStandardMaterial
-        color={props.color ?? "#f4d35e"}
-        emissive={props.color ?? "#f4d35e"}
+        color={color}
+        emissive={color}
         emissiveIntensity={0.25}
       />
     </mesh>
@@ -82,7 +91,7 @@ export function SpringOscillator3D(props: Experiment3DRendererProps<SpringOscill
         <boxGeometry args={[0.7, 0.7, 0.7]} />
         <meshStandardMaterial color="#5fc7ff" />
       </mesh>
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={Math.max(0.4, amplitude * 1.8)} position={[0.2, -0.55, 0]} />
       ) : null}
     </group>
@@ -112,7 +121,7 @@ export function CircularMotion3D(props: Experiment3DRendererProps<CircularMotion
       {props.viewerState.displayLayers.forces ? (
         <ForceArrow length={0.75} position={[x, 0.18, z]} rotation={[0, -theta + Math.PI, 0]} />
       ) : null}
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={radius} position={[radius / 2, -0.35, 0]} />
       ) : null}
     </group>
@@ -167,7 +176,7 @@ export function Buoyancy3D(props: Experiment3DRendererProps<BuoyancyPlan>) {
       {props.viewerState.displayLayers.forces ? (
         <ForceArrow length={0.72} position={[0, y + 0.45, 0]} rotation={[0, 0, Math.PI / 2]} />
       ) : null}
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={1.35} position={[1.85, -0.35, 0]} rotation={[0, 0, Math.PI / 2]} />
       ) : null}
     </group>
@@ -199,7 +208,7 @@ export function LeverBalance3D(props: Experiment3DRendererProps<LeverBalancePlan
           <boxGeometry args={[0.42, 0.58, 0.42]} />
           <meshStandardMaterial color="#9ef0b8" />
         </mesh>
-        {props.viewerState.displayLayers.measurements ? (
+        {shouldShowMeasurementLine(props) ? (
           <>
             <MeasurementBar length={1.45} position={[-0.73, 0.24, 0]} />
             <MeasurementBar length={1.45} position={[0.73, 0.24, 0]} />
@@ -228,7 +237,7 @@ export function OhmsLaw3D(props: Experiment3DRendererProps<OhmsLawPlan>) {
         <torusGeometry args={[1.55, 0.025, 8, 64]} />
         <meshStandardMaterial color="#b5bcc8" />
       </mesh>
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={Math.min(2.4, 0.5 + current * 10)} position={[0, -0.65, 0]} />
       ) : null}
     </group>
@@ -252,7 +261,7 @@ export function IdealGas3D(props: Experiment3DRendererProps<IdealGasPlan>) {
           <meshStandardMaterial color={index === 1 ? "#9ef0b8" : "#5fc7ff"} />
         </mesh>
       ))}
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={volume} position={[0, -0.78, 0]} />
       ) : null}
     </group>
@@ -273,7 +282,7 @@ export function WorkEnergy3D(props: Experiment3DRendererProps<WorkEnergyPlan>) {
       {props.viewerState.displayLayers.forces ? (
         <ForceArrow length={1.05} position={[x + 0.25, 0.42, 0]} rotation={[0, 0, angle]} />
       ) : null}
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={3.2} position={[0, -0.72, 0]} />
       ) : null}
     </group>
@@ -298,7 +307,7 @@ export function WaveSpeed3D(props: Experiment3DRendererProps<WaveSpeedPlan>) {
           <meshStandardMaterial color="#7c88ff" emissive="#1f2aff" emissiveIntensity={0.2} />
         </mesh>
       ) : null}
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={wavelength} position={[0, -0.8, 0]} />
       ) : null}
     </group>
@@ -317,9 +326,9 @@ export function Refraction3D(props: Experiment3DRendererProps<RefractionPlan>) {
         <boxGeometry args={[3.5, 0.04, 1.4]} />
         <meshStandardMaterial color="#5fc7ff" transparent opacity={0.5} />
       </mesh>
-      <MeasurementBar color="#f4d35e" length={1.7} position={[-0.6, 0.65, 0]} rotation={[0, 0, -incident]} />
+      <MeasurementBar color="#7c88ff" length={1.7} position={[-0.6, 0.65, 0]} rotation={[0, 0, -incident]} />
       <MeasurementBar color="#9ef0b8" length={1.7} position={[0.55, -0.55, 0]} rotation={[0, 0, refracted]} />
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={1.2} position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]} />
       ) : null}
     </group>
@@ -343,9 +352,9 @@ export function LensImaging3D(props: Experiment3DRendererProps<LensImagingPlan>)
         <sphereGeometry args={[0.28, 24, 24]} />
         <meshStandardMaterial color="#5fc7ff" transparent opacity={0.45} />
       </mesh>
-      <ForceArrow color="#f4d35e" length={0.95} position={[-1.45, -0.45, 0]} rotation={[0, 0, Math.PI / 2]} />
+      <ForceArrow color="#7c88ff" length={0.95} position={[-1.45, -0.45, 0]} rotation={[0, 0, Math.PI / 2]} />
       <ForceArrow color="#9ef0b8" length={0.65} position={[imageX, 0.35, 0]} rotation={[0, 0, -Math.PI / 2]} />
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={focal * 2} position={[0, -0.9, 0]} />
       ) : null}
     </group>
@@ -372,7 +381,7 @@ export function CoulombsLaw3D(props: Experiment3DRendererProps<CoulombsLawPlan>)
           <ForceArrow length={0.55} position={[distance / 2, -0.38, 0]} rotation={[0, 0, attractive ? Math.PI : 0]} />
         </>
       ) : null}
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={distance} position={[0, -0.75, 0]} />
       ) : null}
     </group>
@@ -405,7 +414,7 @@ export function RcCircuit3D(props: Experiment3DRendererProps<RcCircuitPlan>) {
         <boxGeometry args={[0.08, 0.8, 0.28]} />
         <meshStandardMaterial color="#f4d35e" emissive="#f4d35e" emissiveIntensity={charge * 0.6} />
       </mesh>
-      {props.viewerState.displayLayers.measurements ? (
+      {shouldShowMeasurementLine(props) ? (
         <MeasurementBar length={Math.max(0.25, charge * 1.5)} position={[0.1, -0.9, 0]} />
       ) : null}
     </group>

@@ -8,7 +8,7 @@ import type {
 import { t } from "../../i18n";
 import type { Language } from "../../state/auth-store";
 import type { PlannedSimulation } from "../../state/simulation-client";
-import { ExperimentPlaybackControls, useExperimentPlayback } from "./experiment-playback";
+import { createExperimentViewerPlayback, ExperimentPlaybackControls, useExperimentPlayback } from "./experiment-playback";
 
 const GenericTemplateExperiment = React.lazy(() => import("./GenericTemplateExperiment"));
 const ThreeCourseLabWorkspace = React.lazy(() => import("./ThreeCourseLabWorkspace"));
@@ -40,14 +40,6 @@ type SpringOscillatorMeasurements = {
   energyJ: number;
   willOscillate: boolean;
 };
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function compactNumber(value: number): string {
-  return String(Math.round(value * 100) / 100);
-}
 
 function VariableSlider(props: {
   id: string;
@@ -91,31 +83,6 @@ function ProjectileMotionExperiment(props: {
     variables.launchHeightM,
     variables.launchSpeedMps,
   ]);
-  const angleRad = (variables.launchAngleDeg * Math.PI) / 180;
-  const rangeWidth = clamp(86 + projectileMeasurements.rangeM * 2.2, 90, 238);
-  const launchY = 140 - clamp(variables.launchHeightM * 2.4, 0, 42);
-  const gravityLift = clamp((9.81 - variables.gravityMps2) * 1.8, -20, 24);
-  const arcHeight = clamp(
-    24 + variables.launchSpeedMps * Math.sin(angleRad) * 2.1 + variables.launchHeightM * 1.4 + gravityLift,
-    18,
-    112,
-  );
-  const landingX = 46 + rangeWidth;
-  const controlX = 46 + rangeWidth / 2;
-  const controlY = launchY - arcHeight;
-  const motionX = (1 - playback.progress) ** 2 * 46 + 2 * (1 - playback.progress) * playback.progress * controlX + playback.progress ** 2 * landingX;
-  const motionY = (1 - playback.progress) ** 2 * launchY + 2 * (1 - playback.progress) * playback.progress * controlY + playback.progress ** 2 * 140;
-  const projectilePath = `M 46 ${compactNumber(launchY)} Q ${compactNumber(controlX)} ${compactNumber(controlY)} ${compactNumber(landingX)} 140`;
-  const motionSignature = [
-    "projectile",
-    compactNumber(variables.launchAngleDeg),
-    compactNumber(variables.launchSpeedMps),
-    compactNumber(variables.launchHeightM),
-    compactNumber(variables.gravityMps2),
-    compactNumber(rangeWidth),
-    compactNumber(arcHeight),
-    compactNumber(launchY),
-  ].join(":");
 
   return (
     <section aria-label="Generated Experiment" className="panel experiment-panel">
@@ -125,81 +92,68 @@ function ProjectileMotionExperiment(props: {
         <p className="panel-copy">{plan.objective}</p>
       </div>
 
-      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={plan.title}>
-        <path
-          d={projectilePath}
-          fill="none"
-          stroke="#7c88ff"
-          strokeLinecap="round"
-          strokeWidth="5"
-        />
-        <circle
-          cx={motionX}
-          cy={motionY}
-          data-motion-signature={motionSignature}
-          data-progress={String(playback.progressPercent)}
-          data-running={String(playback.isRunning)}
-          data-testid="experiment-motion-marker"
-          r="10"
-          fill="#5fc7ff"
-        />
-        <circle cx={landingX} cy="140" r="10" fill="#9ef0b8" />
-        <line x1="35" x2="290" y1="150" y2="150" stroke="#344054" strokeWidth="2" />
-      </svg>
+      <div className="full-3d-lab-workspace">
+        <div className="experiment-tools-rail">
+          <ExperimentPlaybackControls language={props.language} playback={playback} />
+          <div className="experiment-controls">
+            <VariableSlider
+              id="launch-angle"
+              label={t(props.language, "launchAngle")}
+              max={85}
+              min={5}
+              step={1}
+              unit="°"
+              value={variables.launchAngleDeg}
+              onChange={(launchAngleDeg) => props.onVariablesChange({ launchAngleDeg })}
+            />
+            <VariableSlider
+              id="launch-speed"
+              label={t(props.language, "launchSpeed")}
+              max={60}
+              min={1}
+              step={1}
+              unit="m/s"
+              value={variables.launchSpeedMps}
+              onChange={(launchSpeedMps) => props.onVariablesChange({ launchSpeedMps })}
+            />
+            <VariableSlider
+              id="launch-height"
+              label={t(props.language, "launchHeight")}
+              max={20}
+              min={0}
+              step={0.5}
+              unit="m"
+              value={variables.launchHeightM}
+              onChange={(launchHeightM) => props.onVariablesChange({ launchHeightM })}
+            />
+            <VariableSlider
+              id="gravity"
+              label={t(props.language, "gravity")}
+              max={20}
+              min={1}
+              step={0.01}
+              unit="m/s²"
+              value={variables.gravityMps2}
+              onChange={(gravityMps2) => props.onVariablesChange({ gravityMps2 })}
+            />
+          </div>
 
-      <ExperimentPlaybackControls language={props.language} playback={playback} />
-
-      <div className="experiment-grid">
-        <div className="experiment-controls">
-          <VariableSlider
-            id="launch-angle"
-            label={t(props.language, "launchAngle")}
-            max={85}
-            min={5}
-            step={1}
-            unit="°"
-            value={variables.launchAngleDeg}
-            onChange={(launchAngleDeg) => props.onVariablesChange({ launchAngleDeg })}
-          />
-          <VariableSlider
-            id="launch-speed"
-            label={t(props.language, "launchSpeed")}
-            max={60}
-            min={1}
-            step={1}
-            unit="m/s"
-            value={variables.launchSpeedMps}
-            onChange={(launchSpeedMps) => props.onVariablesChange({ launchSpeedMps })}
-          />
-          <VariableSlider
-            id="launch-height"
-            label={t(props.language, "launchHeight")}
-            max={20}
-            min={0}
-            step={0.5}
-            unit="m"
-            value={variables.launchHeightM}
-            onChange={(launchHeightM) => props.onVariablesChange({ launchHeightM })}
-          />
-          <VariableSlider
-            id="gravity"
-            label={t(props.language, "gravity")}
-            max={20}
-            min={1}
-            step={0.01}
-            unit="m/s²"
-            value={variables.gravityMps2}
-            onChange={(gravityMps2) => props.onVariablesChange({ gravityMps2 })}
-          />
+          <div className="experiment-results">
+            <p className="data-value">{t(props.language, "range", { value: projectileMeasurements.rangeM })}</p>
+            <p className="data-value">{t(props.language, "flightTime", { value: projectileMeasurements.flightTimeS })}</p>
+            <p className="data-value">{t(props.language, "maxHeight", { value: projectileMeasurements.maxHeightM })}</p>
+            <p className="data-value">{t(props.language, "finalSpeed", { value: projectileMeasurements.finalSpeedMps })}</p>
+            <p className="panel-copy">{props.planned.explanation}</p>
+          </div>
         </div>
-
-        <div className="experiment-results">
-          <p className="data-value">{t(props.language, "range", { value: projectileMeasurements.rangeM })}</p>
-          <p className="data-value">{t(props.language, "flightTime", { value: projectileMeasurements.flightTimeS })}</p>
-          <p className="data-value">{t(props.language, "maxHeight", { value: projectileMeasurements.maxHeightM })}</p>
-          <p className="data-value">{t(props.language, "finalSpeed", { value: projectileMeasurements.finalSpeedMps })}</p>
-          <p className="panel-copy">{props.planned.explanation}</p>
-        </div>
+        <React.Suspense fallback={<div className="experiment-3d-fallback">Loading 3D...</div>}>
+          <ThreeCourseLabWorkspace
+            language={props.language}
+            measurements={measurements as Record<string, unknown>}
+            planned={props.planned}
+            playback={createExperimentViewerPlayback(playback)}
+          />
+        </React.Suspense>
       </div>
 
       <div className="experiment-questions">
@@ -228,19 +182,6 @@ function SpringOscillatorExperiment(props: {
     variables.massKg,
     variables.springConstantNpm,
   ]);
-  const amplitudePx = clamp(8 + variables.amplitudeM * 7, 10, 46);
-  const dampingScale = clamp(1 - variables.dampingRatio * playback.progress, 0.25, 1);
-  const massX = 215 + amplitudePx * dampingScale * Math.cos(playback.progress * Math.PI * 2);
-  const springEndX = clamp(massX, 180, 260);
-  const springPath = `M 35 90 C 55 65 75 115 95 90 S 135 65 155 90 S ${compactNumber(springEndX - 20)} 115 ${compactNumber(springEndX)} 90`;
-  const motionSignature = [
-    "spring",
-    compactNumber(variables.massKg),
-    compactNumber(variables.springConstantNpm),
-    compactNumber(variables.amplitudeM),
-    compactNumber(variables.dampingRatio),
-    compactNumber(amplitudePx),
-  ].join(":");
 
   return (
     <section aria-label="Generated Experiment" className="panel experiment-panel">
@@ -250,83 +191,68 @@ function SpringOscillatorExperiment(props: {
         <p className="panel-copy">{plan.objective}</p>
       </div>
 
-      <svg className="experiment-diagram" viewBox="0 0 320 180" role="img" aria-label={plan.title}>
-        <line x1="35" x2="35" y1="55" y2="125" stroke="#344054" strokeWidth="8" />
-        <path
-          d={springPath}
-          fill="none"
-          stroke="#7c88ff"
-          strokeLinecap="round"
-          strokeWidth="5"
-        />
-        <rect
-          x={massX}
-          y="65"
-          width="54"
-          height="50"
-          rx="6"
-          fill="#5fc7ff"
-          data-motion-signature={motionSignature}
-          data-progress={String(playback.progressPercent)}
-          data-running={String(playback.isRunning)}
-          data-testid="experiment-motion-marker"
-        />
-        <line x1="30" x2="290" y1="130" y2="130" stroke="#344054" strokeWidth="2" />
-      </svg>
+      <div className="full-3d-lab-workspace">
+        <div className="experiment-tools-rail">
+          <ExperimentPlaybackControls language={props.language} playback={playback} />
+          <div className="experiment-controls">
+            <VariableSlider
+              id="spring-mass"
+              label={t(props.language, "mass")}
+              max={20}
+              min={0.1}
+              step={0.1}
+              unit="kg"
+              value={variables.massKg}
+              onChange={(massKg) => props.onVariablesChange({ massKg })}
+            />
+            <VariableSlider
+              id="spring-constant"
+              label={t(props.language, "springConstant")}
+              max={500}
+              min={1}
+              step={1}
+              unit="N/m"
+              value={variables.springConstantNpm}
+              onChange={(springConstantNpm) => props.onVariablesChange({ springConstantNpm })}
+            />
+            <VariableSlider
+              id="amplitude"
+              label={t(props.language, "amplitude")}
+              max={5}
+              min={0.05}
+              step={0.05}
+              unit="m"
+              value={variables.amplitudeM}
+              onChange={(amplitudeM) => props.onVariablesChange({ amplitudeM })}
+            />
+            <VariableSlider
+              id="damping"
+              label={t(props.language, "damping")}
+              max={1}
+              min={0}
+              step={0.01}
+              unit=""
+              value={variables.dampingRatio}
+              onChange={(dampingRatio) => props.onVariablesChange({ dampingRatio })}
+            />
+          </div>
 
-      <ExperimentPlaybackControls language={props.language} playback={playback} />
-
-      <div className="experiment-grid">
-        <div className="experiment-controls">
-          <VariableSlider
-            id="spring-mass"
-            label={t(props.language, "mass")}
-            max={20}
-            min={0.1}
-            step={0.1}
-            unit="kg"
-            value={variables.massKg}
-            onChange={(massKg) => props.onVariablesChange({ massKg })}
-          />
-          <VariableSlider
-            id="spring-constant"
-            label={t(props.language, "springConstant")}
-            max={500}
-            min={1}
-            step={1}
-            unit="N/m"
-            value={variables.springConstantNpm}
-            onChange={(springConstantNpm) => props.onVariablesChange({ springConstantNpm })}
-          />
-          <VariableSlider
-            id="amplitude"
-            label={t(props.language, "amplitude")}
-            max={5}
-            min={0.05}
-            step={0.05}
-            unit="m"
-            value={variables.amplitudeM}
-            onChange={(amplitudeM) => props.onVariablesChange({ amplitudeM })}
-          />
-          <VariableSlider
-            id="damping"
-            label={t(props.language, "damping")}
-            max={1}
-            min={0}
-            step={0.01}
-            unit=""
-            value={variables.dampingRatio}
-            onChange={(dampingRatio) => props.onVariablesChange({ dampingRatio })}
-          />
+          <div className="experiment-results">
+            <p className="data-value">{t(props.language, "period", { value: springMeasurements.periodS })}</p>
+            <p className="data-value">{t(props.language, "angularFrequency", { value: springMeasurements.angularFrequencyRadps })}</p>
+            <p className="data-value">{t(props.language, "maxSpeed", { value: springMeasurements.maxSpeedMps })}</p>
+            <p className="data-value">{t(props.language, "energy", { value: springMeasurements.energyJ })}</p>
+            <p className="panel-copy">{props.planned.explanation}</p>
+          </div>
         </div>
-
-        <div className="experiment-results">
-          <p className="data-value">{t(props.language, "period", { value: springMeasurements.periodS })}</p>
-          <p className="data-value">{t(props.language, "angularFrequency", { value: springMeasurements.angularFrequencyRadps })}</p>
-          <p className="data-value">{t(props.language, "maxSpeed", { value: springMeasurements.maxSpeedMps })}</p>
-          <p className="data-value">{t(props.language, "energy", { value: springMeasurements.energyJ })}</p>
-          <p className="panel-copy">{props.planned.explanation}</p>
-        </div>
+        <React.Suspense fallback={<div className="experiment-3d-fallback">Loading 3D...</div>}>
+          <ThreeCourseLabWorkspace
+            language={props.language}
+            measurements={measurements as Record<string, unknown>}
+            planned={props.planned}
+            playback={createExperimentViewerPlayback(playback)}
+          />
+        </React.Suspense>
       </div>
 
       <div className="experiment-questions">
@@ -592,7 +518,6 @@ export function InclinedPlaneExperiment(props: {
               progressPercent,
               reset: resetPlayback,
             }}
-            onVariablesChange={(variables) => props.onVariablesChange(variables)}
           />
         </React.Suspense>
       </div>

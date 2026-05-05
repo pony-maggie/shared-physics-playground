@@ -19,7 +19,6 @@ export function LessonRail(props: {
   flow: LessonFlow;
   language: Language;
   measurements: Record<string, unknown>;
-  onVariation: (variables: Record<string, number>) => void;
 }) {
   return (
     <aside aria-label="Lesson Flow" className="lesson-rail">
@@ -43,15 +42,6 @@ export function LessonRail(props: {
                   </div>
                 ))}
               </dl>
-            ) : null}
-            {step.variation ? (
-              <button
-                className="tool-button tool-button--primary"
-                type="button"
-                onClick={() => props.onVariation(step.variation?.variables ?? {})}
-              >
-                {step.variation.label}
-              </button>
             ) : null}
           </section>
         ))}

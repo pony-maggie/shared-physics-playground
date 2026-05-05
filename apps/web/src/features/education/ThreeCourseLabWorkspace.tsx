@@ -13,7 +13,6 @@ const Experiment3DViewer = React.lazy(() => import("./three/Experiment3DViewer")
 export function ThreeCourseLabWorkspace(props: {
   language: Language;
   measurements: Record<string, unknown>;
-  onVariablesChange: (variables: Record<string, number>) => void;
   playback: ExperimentPlaybackState;
   planned: PlannedSimulation;
 }) {
@@ -65,10 +64,6 @@ export function ThreeCourseLabWorkspace(props: {
         flow={lessonFlow}
         language={props.language}
         measurements={props.measurements}
-        onVariation={(variables) => {
-          props.onVariablesChange(variables);
-          props.playback.reset();
-        }}
       />
     </>
   );

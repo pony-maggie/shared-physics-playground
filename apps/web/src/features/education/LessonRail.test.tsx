@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test } from "vitest";
 
 import type { LessonFlow } from "./lesson-flow";
 import { LessonRail } from "./LessonRail";
@@ -44,7 +44,6 @@ describe("LessonRail", () => {
         flow={flow}
         language="en"
         measurements={{ speed: 4.2 }}
-        onVariation={() => undefined}
       />,
     );
 
@@ -57,21 +56,17 @@ describe("LessonRail", () => {
     expect(screen.getByText("4.2")).toBeTruthy();
   });
 
-  test("applies a variation from the Try step", () => {
-    const onVariation = vi.fn();
-
+  test("shows the Try step as guidance without rendering a variation button", () => {
     render(
       <LessonRail
         activeStep="try"
         flow={flow}
         language="en"
         measurements={{ speed: 4.2 }}
-        onVariation={onVariation}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Change angle" }));
-
-    expect(onVariation).toHaveBeenCalledWith({ angleDeg: 30 });
+    expect(screen.getByText("Try it.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Change angle" })).toBeNull();
   });
 });
