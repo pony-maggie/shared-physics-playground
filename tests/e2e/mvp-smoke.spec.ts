@@ -22,12 +22,15 @@ test("guest can try the fixed inclined-plane demo without custom generation", as
   await expect(page.getByRole("button", { name: "Refraction" })).toBeVisible();
   await page.getByRole("button", { name: "Projectile motion" }).click();
   await expect(page.getByLabel("Physics question")).toHaveValue("How far will a ball fly if I launch it upward?");
-  await expect(page.getByText("斜面与摩擦")).toBeVisible();
+  const experimentPanel = page.getByRole("region", { name: "Generated Experiment" });
+  await expect(experimentPanel.getByRole("heading", { name: "斜面与摩擦" }).first()).toBeVisible();
   await expect(page.getByText(/acceleration:/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Play Experiment" })).toBeVisible();
-  const viewer = page.getByTestId("experiment-3d-viewer");
+  await expect(experimentPanel.getByRole("button", { name: "Play Experiment" })).toBeVisible();
+  const viewer = experimentPanel.getByTestId("experiment-3d-viewer");
   await expect(viewer).toBeVisible();
   await expect(viewer).toHaveAttribute("data-concept", "inclined_plane");
+  await expect(viewer).toHaveAttribute("data-debug-part-colors", "semantic");
+  await expect(viewer).toHaveAttribute("data-debug-joint-overlay", "measurement");
   await expect(page.locator(".experiment-diagram")).toHaveCount(0);
 
   await expect(viewer).toHaveAttribute("data-running", "false");
@@ -133,6 +136,7 @@ test("authenticated browser flow can generate every built-in experiment", async 
     const viewer = experimentPanel.getByTestId("experiment-3d-viewer");
     await expect(viewer).toBeVisible();
     await expect(viewer).toHaveAttribute("data-concept", concept);
+    await expect(viewer).toHaveAttribute("data-debug-part-colors", "semantic");
     await expect(experimentPanel.locator(".experiment-diagram")).toHaveCount(0);
     await expect(experimentPanel.locator('[data-testid="experiment-motion-marker"]')).toHaveCount(0);
     await expect(experimentPanel.getByRole("button", { name: "Change angle" })).toHaveCount(0);

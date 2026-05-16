@@ -74,10 +74,15 @@ describe("world repository", () => {
     const sameUser = repo.findOrCreateUser("builder@example.com");
 
     expect(user).toEqual({
+      createdAt: expect.any(String),
       userId: "user-1",
       email: "builder@example.com",
+      isNew: true,
     });
-    expect(sameUser).toEqual(user);
+    expect(sameUser).toEqual({
+      ...user,
+      isNew: false,
+    });
 
     repo.saveLoginCode({
       email: "builder@example.com",
@@ -115,7 +120,10 @@ describe("world repository", () => {
       sessionTokenHash: "session-hash",
       createdAt: "2026-04-12T12:02:00.000Z",
       expiresAt: "2026-05-12T12:02:00.000Z",
-      user: user,
+      user: {
+        userId: "user-1",
+        email: "builder@example.com",
+      },
     });
 
     repo.deleteSession("session-hash");

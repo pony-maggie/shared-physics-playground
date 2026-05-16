@@ -17,6 +17,12 @@ export type ProInterestEmailInput = {
   userId: string | null;
 };
 
+export type NewUserRegistrationEmailInput = {
+  email: string;
+  registeredAt: string;
+  userId: string;
+};
+
 type Transport = {
   sendMail: (payload: Record<string, unknown>) => Promise<unknown>;
 };
@@ -144,6 +150,25 @@ export function renderProInterestEmail(input: ProInterestEmailInput) {
   };
 }
 
+export function renderNewUserRegistrationEmail(input: NewUserRegistrationEmailInput) {
+  const safeEmail = escapeHtml(input.email);
+  const safeRegisteredAt = escapeHtml(input.registeredAt);
+  const safeUserId = escapeHtml(input.userId);
+
+  return {
+    subject: `New user registered: ${input.email}`,
+    text: `有新用户注册，邮箱是 ${input.email}，注册时间是 ${input.registeredAt}。`,
+    html: [
+      "<p>有新用户注册。</p>",
+      "<ul>",
+      `<li>邮箱：${safeEmail}</li>`,
+      `<li>注册时间：${safeRegisteredAt}</li>`,
+      `<li>User ID：${safeUserId}</li>`,
+      "</ul>",
+    ].join(""),
+  };
+}
+
 export function createMailer({
   env = process.env,
   fetchImpl = fetch,
@@ -197,6 +222,14 @@ export function createMailer({
           ...message,
         });
       },
+      async sendNewUserRegistration(input: NewUserRegistrationEmailInput & { operatorEmail: string }) {
+        const message = renderNewUserRegistrationEmail(input);
+
+        await sendResendEmail({
+          to: input.operatorEmail,
+          ...message,
+        });
+      },
     };
   }
 
@@ -217,6 +250,17 @@ export function createMailer({
     },
     async sendProInterest(input: ProInterestEmailInput & { operatorEmail: string }) {
       const message = renderProInterestEmail(input);
+
+      await transport.sendMail({
+        from: formatFrom(config.from),
+        to: input.operatorEmail,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      });
+    },
+    async sendNewUserRegistration(input: NewUserRegistrationEmailInput & { operatorEmail: string }) {
+      const message = renderNewUserRegistrationEmail(input);
 
       await transport.sendMail({
         from: formatFrom(config.from),

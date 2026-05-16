@@ -48,7 +48,14 @@ describe("Experiment3DViewer", () => {
       "0",
     );
     expect(screen.getByTestId("experiment-3d-viewer").getAttribute("data-running")).toBe("false");
+    expect(screen.getByTestId("experiment-3d-viewer").getAttribute("data-debug-part-colors")).toBe(
+      "semantic",
+    );
+    expect(screen.getByTestId("experiment-3d-viewer").getAttribute("data-debug-joint-overlay")).toBe(
+      "measurement",
+    );
     expect(screen.getByTestId("r3f-canvas")).toBeTruthy();
-    expect(screen.getByText("Inclined plane")).toBeTruthy();
+    expect(screen.queryByText("3D Lab")).toBeNull();
+    expect(screen.queryByText("Inclined plane")).toBeNull();
   });
 });

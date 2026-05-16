@@ -13,4 +13,16 @@ describe("3D renderer contract", () => {
       expect(getExperiment3DRoles(concept).length).toBeGreaterThanOrEqual(3);
     },
   );
+
+  test.each([
+    "inclined_plane",
+    "spring_oscillator",
+    "lever_balance",
+    "circular_motion",
+  ] as const)("%s is covered by the apparatus migration set", (concept) => {
+    expect(getExperiment3DRenderer(concept)).toBeTypeOf("function");
+    expect(getExperiment3DRoles(concept)).toEqual(
+      expect.arrayContaining(["moving-object", "measurement-line"]),
+    );
+  });
 });

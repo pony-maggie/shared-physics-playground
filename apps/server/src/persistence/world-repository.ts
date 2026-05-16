@@ -222,9 +222,10 @@ export const createWorldRepository = (filename: string) => {
     },
     findOrCreateUser(email: string) {
       const existing = db
-        .prepare("select user_id, email from users where email = ?")
+        .prepare("select user_id, email, created_at from users where email = ?")
         .get(email) as
         | {
+            created_at: string;
             user_id: string;
             email: string;
           }
@@ -232,8 +233,10 @@ export const createWorldRepository = (filename: string) => {
 
       if (existing) {
         return {
+          createdAt: existing.created_at,
           userId: existing.user_id,
           email: existing.email,
+          isNew: false,
         };
       }
 
@@ -248,8 +251,10 @@ export const createWorldRepository = (filename: string) => {
       );
 
       return {
+        createdAt,
         userId,
         email,
+        isNew: true,
       };
     },
     saveLoginCode(input: {

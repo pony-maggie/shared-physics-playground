@@ -184,6 +184,29 @@ describe("InclinedPlaneExperiment", () => {
     expect(onVariablesChange).toHaveBeenCalledWith({ angleDeg: 40 });
   });
 
+  test("groups primary controls and guidance in a named dock inside the 3D workspace", async () => {
+    render(
+      <InclinedPlaneExperiment
+        language="en"
+        planned={planned}
+        onVariablesChange={() => {}}
+      />,
+    );
+
+    const workspace = document.querySelector(".full-3d-lab-workspace");
+    const controlDock = screen.getByRole("region", { name: "Experiment Controls" });
+
+    expect(workspace).not.toBeNull();
+    expect(workspace?.contains(controlDock)).toBe(true);
+    expect(controlDock.classList.contains("experiment-tools-rail")).toBe(true);
+    expect(controlDock.querySelector(".experiment-controls")).not.toBeNull();
+    expect(controlDock.querySelector(".experiment-results")).not.toBeNull();
+    expect(controlDock.querySelector(".experiment-questions")).not.toBeNull();
+    expect(controlDock.textContent).toContain("Guiding Questions");
+    expect(screen.queryByRole("complementary", { name: "Lesson Flow" })).toBeNull();
+    expect(await screen.findByTestId("experiment-3d-viewer")).toBeTruthy();
+  });
+
   test.each(SIMULATION_CONCEPTS)("uses the 3D viewer as the only primary stage for %s", async (concept) => {
     render(
       <InclinedPlaneExperiment

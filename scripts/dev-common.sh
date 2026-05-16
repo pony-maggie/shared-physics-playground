@@ -7,6 +7,7 @@ RUNTIME_DIR="$ROOT_DIR/.dev-runtime"
 
 SERVER_PORT=2567
 WEB_PORT=4173
+DEV_NODE_MAJOR=24
 
 SERVER_PID_FILE="$RUNTIME_DIR/server.pid"
 WEB_PID_FILE="$RUNTIME_DIR/web.pid"
@@ -16,6 +17,31 @@ WEB_LOG_FILE="$RUNTIME_DIR/web.log"
 
 WEB_VITE_BIN="$ROOT_DIR/apps/web/node_modules/.bin/vite"
 SERVER_TSX_BIN="$ROOT_DIR/apps/server/node_modules/.bin/tsx"
+
+function current_node_major() {
+  node -p "process.versions.node.split('.')[0]"
+}
+
+function ensure_dev_node_runtime() {
+  local entrypoint="$1"
+  shift
+
+  require_command node
+
+  if [[ "$(current_node_major)" == "$DEV_NODE_MAJOR" ]]; then
+    return
+  fi
+
+  if [[ "${PLAYGROUND_DEV_NODE_REEXEC:-0}" == "1" ]]; then
+    echo "Expected Node ${DEV_NODE_MAJOR}.x for local dev, but found $(node -v)." >&2
+    exit 1
+  fi
+
+  require_command npx
+
+  echo "==> local dev requires Node ${DEV_NODE_MAJOR}.x; re-running with temporary Node ${DEV_NODE_MAJOR}"
+  exec env PLAYGROUND_DEV_NODE_REEXEC=1 npx -y -p "node@${DEV_NODE_MAJOR}" bash "$entrypoint" "$@"
+}
 
 function ensure_runtime_dir() {
   mkdir -p "$RUNTIME_DIR"
@@ -61,9 +87,29 @@ function require_executable() {
 
 function verify_dev_prerequisites() {
   require_command node
+  if [[ "$(current_node_major)" != "$DEV_NODE_MAJOR" ]]; then
+    echo "Expected Node ${DEV_NODE_MAJOR}.x for local dev, but found $(node -v)." >&2
+    exit 1
+  fi
   require_command curl
+  require_command npx
   require_executable "$SERVER_TSX_BIN" "Install server dependencies with: cd apps/server && npm install"
   require_executable "$WEB_VITE_BIN" "Install web dependencies with: cd apps/web && npm install"
+}
+
+function ensure_server_native_dependencies() {
+  if (
+    cd "$ROOT_DIR/apps/server"
+    node -e "require('better-sqlite3')" >/dev/null 2>&1
+  ); then
+    return
+  fi
+
+  echo "==> rebuilding server native dependencies for Node $(node -v)"
+  (
+    cd "$ROOT_DIR/apps/server"
+    npx -y -p "node@${DEV_NODE_MAJOR}" -p npm@11 npm rebuild better-sqlite3
+  )
 }
 
 function remove_pid_file() {

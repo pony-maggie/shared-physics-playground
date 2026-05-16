@@ -2,6 +2,9 @@
   "name": "shared-physics-playground",
   "private": true,
   "version": "0.1.0",
+  "engines": {
+    "node": "24.x"
+  },
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "pnpm --parallel --filter @playground/web --filter @playground/server dev",

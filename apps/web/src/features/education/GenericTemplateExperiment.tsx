@@ -362,6 +362,19 @@ function VariableSlider(props: {
   );
 }
 
+function GuidingQuestions(props: { language: Language; questions: string[] }) {
+  return (
+    <div className="experiment-questions">
+      <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>
+      <ul>
+        {props.questions.map((question) => (
+          <li key={question}>{question}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function localizedLabel(language: Language, key: string, fallback: string): string {
   return LOCALIZED_LABELS[key]?.[language] ?? fallback;
 }
@@ -426,7 +439,7 @@ export default function GenericTemplateExperiment(props: {
       </div>
 
       <div className="full-3d-lab-workspace">
-        <div className="experiment-tools-rail">
+        <div aria-label="Experiment Controls" className="experiment-tools-rail" role="region">
           <ExperimentPlaybackControls language={props.language} playback={playback} />
           <div className="experiment-controls">
             {config.sliders.map((slider) => (
@@ -452,6 +465,7 @@ export default function GenericTemplateExperiment(props: {
             ))}
             <p className="panel-copy">{props.planned.explanation}</p>
           </div>
+          <GuidingQuestions language={props.language} questions={plan.guidingQuestions} />
         </div>
         <React.Suspense fallback={<div className="experiment-3d-fallback">Loading 3D...</div>}>
           <ThreeCourseLabWorkspace
@@ -463,14 +477,6 @@ export default function GenericTemplateExperiment(props: {
         </React.Suspense>
       </div>
 
-      <div className="experiment-questions">
-        <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>
-        <ul>
-          {plan.guidingQuestions.map((question) => (
-            <li key={question}>{question}</li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }

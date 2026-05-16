@@ -13,6 +13,8 @@ import type {
   WaveSpeedPlan,
   WorkEnergyPlan,
 } from "../../../../../../../packages/prompt-contracts/src/simulation-spec";
+import { getApparatusTemplate } from "../../../../../../../packages/physics-schema/src/apparatus-kit";
+import { PhysicsApparatusScene } from "../apparatus/PhysicsApparatusScene";
 import type { Experiment3DRendererProps } from "../types";
 
 function shouldShowMeasurementLine(props: Experiment3DRendererProps): boolean {
@@ -64,35 +66,79 @@ function ForceArrow(props: {
   );
 }
 
+function ArticraftSkateboardWheelAssembly(props: {
+  position: [number, number, number];
+  progress: number;
+  rotation: [number, number, number];
+  scale: number;
+}) {
+  const wheelSpin = props.progress * Math.PI * 2 * 3;
+  const truckXs = [-0.36, 0.36] as const;
+  const wheelYs = [-0.28, 0.28] as const;
+
+  return (
+    <group
+      position={props.position}
+      rotation={props.rotation}
+      scale={[props.scale, props.scale, props.scale]}
+      userData={{
+        articraftRecordId: "rec_skateboard_b74cde82df474176b7005c584ba8eb13",
+        source: "articraft-skateboard-structure",
+      }}
+    >
+      <mesh position={[0, 0.16, 0]}>
+        <boxGeometry args={[0.92, 0.08, 0.28]} />
+        <meshStandardMaterial color="#5fc7ff" emissive="#0ea5e9" emissiveIntensity={0.18} />
+      </mesh>
+      {truckXs.map((truckX) => (
+        <group key={`truck-${truckX}`} position={[truckX, 0.05, 0]}>
+          <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.035, 0.035, 0.66, 18]} />
+            <meshStandardMaterial color="#98a2b3" metalness={0.35} roughness={0.45} />
+          </mesh>
+          <mesh position={[0, 0.08, 0]}>
+            <boxGeometry args={[0.18, 0.08, 0.08]} />
+            <meshStandardMaterial color="#667085" />
+          </mesh>
+          {wheelYs.map((wheelY) => (
+            <mesh key={`wheel-${truckX}-${wheelY}`} position={[0, 0, wheelY]} rotation={[wheelSpin, 0, 0]}>
+              <cylinderGeometry args={[0.12, 0.12, 0.08, 32]} />
+              <meshStandardMaterial color="#101828" roughness={0.5} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
 export function SpringOscillator3D(props: Experiment3DRendererProps<SpringOscillatorPlan>) {
   const amplitude = Math.min(1.3, props.plan.variables.amplitudeM / 2);
   const damping = 1 - props.plan.variables.dampingRatio * 0.55;
   const x = Math.cos(props.playback.progress * Math.PI * 2) * amplitude * damping;
+  const apparatusProgress = amplitude > 0 ? (x / Math.max(0.1, amplitude) + 1) / 2 : 0.5;
 
   return (
     <group>
-      <mesh position={[-2, 0.1, 0]}>
-        <boxGeometry args={[0.18, 1.4, 0.7]} />
-        <meshStandardMaterial color="#5a6475" />
-      </mesh>
-      <mesh position={[x - 0.8, 0.1, 0]}>
+      <PhysicsApparatusScene
+        playbackProgress={apparatusProgress}
+        showMeasurements={shouldShowMeasurementLine(props)}
+        template={getApparatusTemplate("spring-cart-rig")}
+      />
+      <mesh position={[x - 0.8, 0.32, 0]}>
         <torusGeometry args={[0.26, 0.025, 8, 12]} />
         <meshStandardMaterial color="#b5bcc8" />
       </mesh>
-      <mesh position={[x - 0.25, 0.1, 0]}>
+      <mesh position={[x - 0.25, 0.32, 0]}>
         <torusGeometry args={[0.26, 0.025, 8, 12]} />
         <meshStandardMaterial color="#b5bcc8" />
       </mesh>
-      <mesh position={[x + 0.3, 0.1, 0]}>
+      <mesh position={[x + 0.3, 0.32, 0]}>
         <torusGeometry args={[0.26, 0.025, 8, 12]} />
         <meshStandardMaterial color="#b5bcc8" />
-      </mesh>
-      <mesh position={[x + 1.05, 0.1, 0]}>
-        <boxGeometry args={[0.7, 0.7, 0.7]} />
-        <meshStandardMaterial color="#5fc7ff" />
       </mesh>
       {shouldShowMeasurementLine(props) ? (
-        <MeasurementBar length={Math.max(0.4, amplitude * 1.8)} position={[0.2, -0.55, 0]} />
+        <MeasurementBar length={Math.max(0.4, amplitude * 1.8)} position={[0.8, 0.9, -0.45]} />
       ) : null}
     </group>
   );
@@ -106,23 +152,21 @@ export function CircularMotion3D(props: Experiment3DRendererProps<CircularMotion
 
   return (
     <group>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[radius, 0.018, 8, 96]} />
-        <meshStandardMaterial color="#7c88ff" emissive="#1f2aff" emissiveIntensity={0.25} />
-      </mesh>
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#f3f5f7" />
-      </mesh>
-      <mesh position={[x, 0, z]}>
-        <sphereGeometry args={[0.18, 24, 24]} />
-        <meshStandardMaterial color="#5fc7ff" />
-      </mesh>
+      <group rotation={[0, -theta, 0]} scale={[radius / 1.2, radius / 1.2, radius / 1.2]}>
+        <PhysicsApparatusScene
+          playbackProgress={props.playback.progress}
+          showMeasurements={shouldShowMeasurementLine(props)}
+          template={getApparatusTemplate("circular-wheel-rig")}
+        />
+      </group>
+      <ArticraftSkateboardWheelAssembly
+        position={[x, 0.55, z]}
+        progress={props.playback.progress}
+        rotation={[0, -theta + Math.PI / 2, 0]}
+        scale={Math.max(0.8, radius / 1.2)}
+      />
       {props.viewerState.displayLayers.forces ? (
         <ForceArrow length={0.75} position={[x, 0.18, z]} rotation={[0, -theta + Math.PI, 0]} />
-      ) : null}
-      {shouldShowMeasurementLine(props) ? (
-        <MeasurementBar length={radius} position={[radius / 2, -0.35, 0]} />
       ) : null}
     </group>
   );
@@ -191,29 +235,12 @@ export function LeverBalance3D(props: Experiment3DRendererProps<LeverBalancePlan
 
   return (
     <group>
-      <mesh position={[0, -0.55, 0]}>
-        <coneGeometry args={[0.28, 0.8, 4]} />
-        <meshStandardMaterial color="#5a6475" />
-      </mesh>
       <group rotation={[0, 0, -tilt]}>
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[4.2, 0.08, 0.18]} />
-          <meshStandardMaterial color="#b5bcc8" />
-        </mesh>
-        <mesh position={[-1.45, -0.35, 0]}>
-          <boxGeometry args={[0.42, 0.58, 0.42]} />
-          <meshStandardMaterial color="#5fc7ff" />
-        </mesh>
-        <mesh position={[1.45, -0.35, 0]}>
-          <boxGeometry args={[0.42, 0.58, 0.42]} />
-          <meshStandardMaterial color="#9ef0b8" />
-        </mesh>
-        {shouldShowMeasurementLine(props) ? (
-          <>
-            <MeasurementBar length={1.45} position={[-0.73, 0.24, 0]} />
-            <MeasurementBar length={1.45} position={[0.73, 0.24, 0]} />
-          </>
-        ) : null}
+        <PhysicsApparatusScene
+          playbackProgress={Math.min(1, Math.max(0, 0.5 + tilt))}
+          showMeasurements={shouldShowMeasurementLine(props)}
+          template={getApparatusTemplate("lever-balance-rig")}
+        />
       </group>
     </group>
   );

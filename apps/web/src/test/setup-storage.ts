@@ -8,8 +8,8 @@ vi.mock("@react-three/fiber", () => ({
 }));
 
 vi.mock("@react-three/drei", () => ({
-  Html: ({ children }: { children?: React.ReactNode }) =>
-    React.createElement("div", { "data-testid": "r3f-html" }, children),
+  Html: ({ children, ...props }: { children?: React.ReactNode }) =>
+    React.createElement("div", { ...props, "data-testid": props["data-testid"] ?? "r3f-html" }, children),
   OrbitControls: () => React.createElement("div", { "data-testid": "orbit-controls" }),
 }));
 

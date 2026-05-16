@@ -69,6 +69,19 @@ function VariableSlider(props: {
   );
 }
 
+function GuidingQuestions(props: { language: Language; questions: string[] }) {
+  return (
+    <div className="experiment-questions">
+      <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>
+      <ul>
+        {props.questions.map((question) => (
+          <li key={question}>{question}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ProjectileMotionExperiment(props: {
   language: Language;
   planned: PlannedSimulation & { plan: { concept: "projectile_motion" } };
@@ -93,7 +106,7 @@ function ProjectileMotionExperiment(props: {
       </div>
 
       <div className="full-3d-lab-workspace">
-        <div className="experiment-tools-rail">
+        <div aria-label="Experiment Controls" className="experiment-tools-rail" role="region">
           <ExperimentPlaybackControls language={props.language} playback={playback} />
           <div className="experiment-controls">
             <VariableSlider
@@ -145,6 +158,7 @@ function ProjectileMotionExperiment(props: {
             <p className="data-value">{t(props.language, "finalSpeed", { value: projectileMeasurements.finalSpeedMps })}</p>
             <p className="panel-copy">{props.planned.explanation}</p>
           </div>
+          <GuidingQuestions language={props.language} questions={plan.guidingQuestions} />
         </div>
         <React.Suspense fallback={<div className="experiment-3d-fallback">Loading 3D...</div>}>
           <ThreeCourseLabWorkspace
@@ -156,14 +170,6 @@ function ProjectileMotionExperiment(props: {
         </React.Suspense>
       </div>
 
-      <div className="experiment-questions">
-        <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>
-        <ul>
-          {plan.guidingQuestions.map((question) => (
-            <li key={question}>{question}</li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }
@@ -192,7 +198,7 @@ function SpringOscillatorExperiment(props: {
       </div>
 
       <div className="full-3d-lab-workspace">
-        <div className="experiment-tools-rail">
+        <div aria-label="Experiment Controls" className="experiment-tools-rail" role="region">
           <ExperimentPlaybackControls language={props.language} playback={playback} />
           <div className="experiment-controls">
             <VariableSlider
@@ -244,6 +250,7 @@ function SpringOscillatorExperiment(props: {
             <p className="data-value">{t(props.language, "energy", { value: springMeasurements.energyJ })}</p>
             <p className="panel-copy">{props.planned.explanation}</p>
           </div>
+          <GuidingQuestions language={props.language} questions={plan.guidingQuestions} />
         </div>
         <React.Suspense fallback={<div className="experiment-3d-fallback">Loading 3D...</div>}>
           <ThreeCourseLabWorkspace
@@ -255,14 +262,6 @@ function SpringOscillatorExperiment(props: {
         </React.Suspense>
       </div>
 
-      <div className="experiment-questions">
-        <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>
-        <ul>
-          {plan.guidingQuestions.map((question) => (
-            <li key={question}>{question}</li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }
@@ -417,7 +416,26 @@ export function InclinedPlaneExperiment(props: {
       </div>
 
       <div className="full-3d-lab-workspace">
-        <div className="experiment-tools-rail">
+        <div aria-label="Experiment Controls" className="experiment-tools-rail" role="region">
+          <div className="button-cluster experiment-playback">
+            <button
+              className="tool-button tool-button--primary"
+              disabled={!inclinedMeasurements.willSlide}
+              type="button"
+              onClick={togglePlayback}
+            >
+              {isRunning
+                ? t(props.language, "pauseExperiment")
+                : t(props.language, "playExperiment")}
+            </button>
+            <button className="tool-button" type="button" onClick={resetPlayback}>
+              {t(props.language, "resetExperiment")}
+            </button>
+            <span className="status-inline__meta">
+              {t(props.language, "experimentProgress", { value: progressPercent })}
+            </span>
+          </div>
+
           <div className="experiment-controls">
             <VariableSlider
               id="angle"
@@ -475,25 +493,7 @@ export function InclinedPlaneExperiment(props: {
             </p>
             <p className="panel-copy">{props.planned.explanation}</p>
           </div>
-
-          <div className="button-cluster experiment-playback">
-            <button
-              className="tool-button tool-button--primary"
-              disabled={!inclinedMeasurements.willSlide}
-              type="button"
-              onClick={togglePlayback}
-            >
-              {isRunning
-                ? t(props.language, "pauseExperiment")
-                : t(props.language, "playExperiment")}
-            </button>
-            <button className="tool-button" type="button" onClick={resetPlayback}>
-              {t(props.language, "resetExperiment")}
-            </button>
-            <span className="status-inline__meta">
-              {t(props.language, "experimentProgress", { value: progressPercent })}
-            </span>
-          </div>
+          <GuidingQuestions language={props.language} questions={plan.guidingQuestions} />
         </div>
         <React.Suspense
           fallback={<div className="experiment-3d-fallback">Loading 3D...</div>}
@@ -522,14 +522,6 @@ export function InclinedPlaneExperiment(props: {
         </React.Suspense>
       </div>
 
-      <div className="experiment-questions">
-        <h3 className="group-title">{t(props.language, "guidingQuestions")}</h3>
-        <ul>
-          {plan.guidingQuestions.map((question) => (
-            <li key={question}>{question}</li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }

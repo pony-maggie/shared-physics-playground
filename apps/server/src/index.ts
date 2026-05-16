@@ -22,6 +22,7 @@ import { DEMO_ROOM_SLUG } from "./playground-service";
 const DEFAULT_PORT = 2567;
 const DEFAULT_STAGE_SLUG = "my-stage";
 const DEFAULT_PRO_INTEREST_OPERATOR_EMAIL = "machengyu519@gmail.com";
+const DEFAULT_NEW_USER_REGISTRATION_OPERATOR_EMAIL = "machengyu519@gmail.com";
 
 type JsonRequest = {
   body?: Record<string, unknown>;
@@ -871,9 +872,30 @@ export function createRealtimeServer(port = DEFAULT_PORT) {
   const server = http.createServer(app);
   const worldRepository = createWorldRepository("data/worlds.sqlite");
   const mailer = isMailerConfigured() ? createMailer() : null;
+  const newUserRegistrationOperatorEmail =
+    process.env.PLAYGROUND_NEW_USER_REGISTRATION_EMAIL?.trim() ||
+    DEFAULT_NEW_USER_REGISTRATION_OPERATOR_EMAIL;
   const authService = createAuthService({
     repository: worldRepository,
     sendLoginCodeEmail: mailer ? (input) => mailer.sendLoginCode(input) : undefined,
+    onUserRegistered: async (input) => {
+      if (!mailer) {
+        logger.warn("auth.new_user_registration_email_unconfigured", {
+          email: input.email,
+          registeredAt: input.registeredAt,
+          userId: input.userId,
+        });
+        return;
+      }
+
+      await mailer.sendNewUserRegistration({
+        ...input,
+        operatorEmail: newUserRegistrationOperatorEmail,
+      });
+    },
+    onUserRegistrationNotificationFailed: (input) => {
+      logger.warn("auth.new_user_registration_email_failed", input);
+    },
   });
   const playgroundService = createPlaygroundService({ worldRepository, logger });
   const educationModelPlanner = process.env.GOOGLE_API_KEY

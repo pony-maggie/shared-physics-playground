@@ -24,6 +24,12 @@ export type AuthUser = {
   access: UserAccessPolicy;
 };
 
+export type NewUserRegistrationInput = {
+  email: string;
+  registeredAt: string;
+  userId: string;
+};
+
 type ChallengeRecord = {
   answer: string;
   expiresAt: number;
@@ -71,6 +77,8 @@ export function createAuthService(props: {
   accessConfig?: RuntimeAccessConfig;
   exposeDevelopmentCode?: boolean;
   sendLoginCodeEmail?: (input: { email: string; code: string }) => Promise<void>;
+  onUserRegistered?: (input: NewUserRegistrationInput) => Promise<void>;
+  onUserRegistrationNotificationFailed?: (input: NewUserRegistrationInput & { error: string }) => void;
 }) {
   const repository = props.repository;
   const now = props.now ?? (() => new Date());
@@ -79,16 +87,19 @@ export function createAuthService(props: {
   const isDevelopment = props.isDevelopment ?? process.env.NODE_ENV !== "production";
   const accessConfig = props.accessConfig ?? loadRuntimeAccessConfig();
   const sendLoginCodeEmail = props.sendLoginCodeEmail ?? null;
+  const onUserRegistered = props.onUserRegistered ?? null;
+  const onUserRegistrationNotificationFailed = props.onUserRegistrationNotificationFailed ?? null;
   const exposeDevelopmentCode = props.exposeDevelopmentCode ?? (isDevelopment && !sendLoginCodeEmail);
   const requireEmailDelivery = !exposeDevelopmentCode && !sendLoginCodeEmail;
   const challenges = new Map<string, ChallengeRecord>();
   const requestsByEmail = new Map<string, RequestWindowRecord>();
   const requestsByIp = new Map<string, RequestWindowRecord>();
 
-  function createSessionForEmail(email: string) {
+  async function createSessionForEmail(email: string) {
     const userRecord = repository.findOrCreateUser(email);
     const user: AuthUser = {
-      ...userRecord,
+      email: userRecord.email,
+      userId: userRecord.userId,
       access: getUserAccessPolicy(accessConfig, email),
     };
     const authToken = randomId();
@@ -99,6 +110,23 @@ export function createAuthService(props: {
       createdAt: now().toISOString(),
       expiresAt: new Date(now().getTime() + SESSION_TTL_MS).toISOString(),
     });
+
+    if (userRecord.isNew && onUserRegistered) {
+      const registration = {
+        email: userRecord.email,
+        registeredAt: userRecord.createdAt,
+        userId: userRecord.userId,
+      };
+
+      try {
+        await onUserRegistered(registration);
+      } catch (error) {
+        onUserRegistrationNotificationFailed?.({
+          ...registration,
+          error: error instanceof Error ? error.message : "new-user notification failed",
+        });
+      }
+    }
 
     return {
       authToken,
@@ -232,7 +260,7 @@ export function createAuthService(props: {
       }
 
       repository.consumeLoginCode(email, now().toISOString());
-      return createSessionForEmail(email);
+      return await createSessionForEmail(email);
     },
     resolveSession(authToken: string | null | undefined) {
       if (!authToken) {

@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 
 import type { SimulationPlan } from "../../../../../../packages/prompt-contracts/src/simulation-spec";
 import type { Language } from "../../../state/auth-store";
+import { createArticraftStyleOverlayMetadata } from "./apparatus/articraft-style-overlays";
 import { createExperimentVisualMetadata } from "./derived-visuals";
 import { getExperiment3DRenderer } from "./renderers";
 import type { ExperimentPlaybackState, ExperimentViewerState } from "./types";
@@ -21,6 +22,11 @@ export function Experiment3DViewer(props: {
     displayLayers: props.viewerState.displayLayers,
     requestedRoles: props.viewerState.focusedRoles,
   });
+  const overlayMetadata = createArticraftStyleOverlayMetadata({
+    availableRoles: visualMetadata.availableRoles,
+    displayLayers: props.viewerState.displayLayers,
+    focusedRoles: visualMetadata.focusedRoles,
+  });
 
   return (
     <section
@@ -29,6 +35,8 @@ export function Experiment3DViewer(props: {
       data-active-step={props.viewerState.activeStep}
       data-available-roles={visualMetadata.availableRoles.join(",")}
       data-concept={props.plan.concept}
+      data-debug-joint-overlay={overlayMetadata.debugJointOverlay}
+      data-debug-part-colors={overlayMetadata.debugPartColors}
       data-display-layers={visualMetadata.displayLayerKey}
       data-focus-key={visualMetadata.focusKey}
       data-focused-roles={visualMetadata.focusedRoles.join(",")}
@@ -36,10 +44,6 @@ export function Experiment3DViewer(props: {
       data-running={String(props.playback.isRunning)}
       data-testid="experiment-3d-viewer"
     >
-      <div className="experiment-3d-viewer__header">
-        <span className="panel-kicker">3D Lab</span>
-        <h2 className="panel-title">{props.plan.title}</h2>
-      </div>
       <div className="experiment-3d-viewer__canvas">
         <Canvas camera={{ fov: 45, position: [4, 3, 5] }}>
           <ambientLight intensity={0.8} />

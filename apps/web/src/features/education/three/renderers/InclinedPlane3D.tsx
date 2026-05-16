@@ -1,4 +1,6 @@
 import type { InclinedPlanePlan } from "../../../../../../../packages/prompt-contracts/src/simulation-spec";
+import { getApparatusTemplate } from "../../../../../../../packages/physics-schema/src/apparatus-kit";
+import { PhysicsApparatusScene } from "../apparatus/PhysicsApparatusScene";
 import type { Experiment3DRendererProps } from "../types";
 
 export function createInclinedPlane3DLayout(input: { angleDeg: number; progress: number }) {
@@ -21,14 +23,14 @@ export function InclinedPlane3D(props: Experiment3DRendererProps<InclinedPlanePl
 
   return (
     <group rotation={[0, 0, layout.rampRotationZ]}>
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[4, 0.12, 1.2]} />
-        <meshStandardMaterial color="#344054" />
-      </mesh>
-      <mesh position={layout.ballPosition}>
-        <sphereGeometry args={[0.22, 24, 24]} />
-        <meshStandardMaterial color="#5fc7ff" />
-      </mesh>
+      <PhysicsApparatusScene
+        playbackProgress={props.playback.progress}
+        showMeasurements={
+          props.viewerState.displayLayers.measurements &&
+          props.viewerState.focusedRoles.includes("measurement-line")
+        }
+        template={getApparatusTemplate("inclined-plane-rig")}
+      />
     </group>
   );
 }

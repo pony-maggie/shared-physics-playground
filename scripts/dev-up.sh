@@ -6,9 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-common.sh"
 
+ensure_dev_node_runtime "$0" "$@"
 ensure_runtime_dir
 load_local_environment
 verify_dev_prerequisites
+ensure_server_native_dependencies
 
 echo "==> restarting local playground environment"
 stop_dev_environment

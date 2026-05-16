@@ -5,8 +5,8 @@ import { createAuthService } from "./auth-service";
 type AuthRepository = Parameters<typeof createAuthService>[0]["repository"];
 
 function createAuthTestRepository(): AuthRepository {
-  const users = new Map<string, { userId: string; email: string }>();
-  const usersById = new Map<string, { userId: string; email: string }>();
+  const users = new Map<string, { userId: string; email: string; createdAt: string }>();
+  const usersById = new Map<string, { userId: string; email: string; createdAt: string }>();
   const loginCodes = new Map<
     string,
     {
@@ -38,17 +38,24 @@ function createAuthTestRepository(): AuthRepository {
       const existing = users.get(normalizedEmail);
 
       if (existing) {
-        return existing;
+        return {
+          ...existing,
+          isNew: false,
+        };
       }
 
       const created = {
         userId: `user-${++userCounter}`,
         email: normalizedEmail,
+        createdAt: new Date("2026-04-12T12:00:00.000Z").toISOString(),
       };
 
       users.set(normalizedEmail, created);
       usersById.set(created.userId, created);
-      return created;
+      return {
+        ...created,
+        isNew: true,
+      };
     },
     saveLoginCode(record) {
       loginCodes.set(record.email, {
@@ -83,7 +90,10 @@ function createAuthTestRepository(): AuthRepository {
         sessionTokenHash: record.sessionTokenHash,
         createdAt: record.createdAt,
         expiresAt: record.expiresAt,
-        user,
+        user: {
+          email: user.email,
+          userId: user.userId,
+        },
       });
     },
     getSession(sessionTokenHash: string) {
@@ -195,6 +205,83 @@ describe("auth service", () => {
     });
 
     expect(verified.user.email).toBe("real-tester@example.com");
+  });
+
+  test("notifies once when verification creates a new user", async () => {
+    const repo = createAuthTestRepository();
+    const registeredUsers: Array<{ email: string; registeredAt: string; userId: string }> = [];
+    let nowValue = new Date("2026-04-12T12:00:00.000Z");
+    const auth = createAuthService({
+      repository: repo,
+      now: () => nowValue,
+      randomInt: () => 123456,
+      randomId: () => "session-token-register",
+      isDevelopment: true,
+      onUserRegistered: async (input) => {
+        registeredUsers.push(input);
+      },
+    });
+
+    const firstChallenge = auth.issueChallenge();
+    await auth.requestCode({
+      email: "New-User@Example.com",
+      challengeId: firstChallenge.challengeId,
+      challengeAnswer: firstChallenge.answer,
+      ipAddress: "127.0.0.1",
+    });
+    await auth.verifyCode({
+      email: "New-User@Example.com",
+      code: "123456",
+    });
+
+    nowValue = new Date("2026-04-12T12:01:00.000Z");
+    const secondChallenge = auth.issueChallenge();
+    await auth.requestCode({
+      email: "new-user@example.com",
+      challengeId: secondChallenge.challengeId,
+      challengeAnswer: secondChallenge.answer,
+      ipAddress: "127.0.0.2",
+    });
+    await auth.verifyCode({
+      email: "new-user@example.com",
+      code: "123456",
+    });
+
+    expect(registeredUsers).toEqual([
+      {
+        email: "new-user@example.com",
+        registeredAt: "2026-04-12T12:00:00.000Z",
+        userId: "user-1",
+      },
+    ]);
+  });
+
+  test("keeps login successful when new-user notification fails", async () => {
+    const repo = createAuthTestRepository();
+    const auth = createAuthService({
+      repository: repo,
+      now: () => new Date("2026-04-12T12:00:00.000Z"),
+      randomInt: () => 123456,
+      randomId: () => "session-token-notify-failure",
+      isDevelopment: true,
+      onUserRegistered: async () => {
+        throw new Error("operator email failed");
+      },
+    });
+
+    const challenge = auth.issueChallenge();
+    await auth.requestCode({
+      email: "notify-failure@example.com",
+      challengeId: challenge.challengeId,
+      challengeAnswer: challenge.answer,
+      ipAddress: "127.0.0.1",
+    });
+    const verified = await auth.verifyCode({
+      email: "notify-failure@example.com",
+      code: "123456",
+    });
+
+    expect(verified.user.email).toBe("notify-failure@example.com");
   });
 
   test("rejects production code requests when email delivery is not configured", async () => {

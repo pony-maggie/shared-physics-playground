@@ -4,7 +4,6 @@ import type { Language } from "../../state/auth-store";
 import type { PlannedSimulation } from "../../state/simulation-client";
 import type { LessonStepId } from "./lesson-flow";
 import { createLessonFlow } from "./lesson-flow";
-import { LessonRail } from "./LessonRail";
 import { deriveFocusedRoles } from "./three/derived-visuals";
 import type { ExperimentPlaybackState, ExperimentViewerState } from "./three/types";
 
@@ -47,25 +46,17 @@ export function ThreeCourseLabWorkspace(props: {
   };
 
   return (
-    <>
-      <React.Suspense
-        fallback={<div className="experiment-3d-fallback">Loading 3D experiment...</div>}
-      >
-        <Experiment3DViewer
-          language={props.language}
-          measurements={props.measurements}
-          plan={props.planned.plan}
-          playback={props.playback}
-          viewerState={viewerState}
-        />
-      </React.Suspense>
-      <LessonRail
-        activeStep={activeLessonStep}
-        flow={lessonFlow}
+    <React.Suspense
+      fallback={<div className="experiment-3d-fallback">Loading 3D experiment...</div>}
+    >
+      <Experiment3DViewer
         language={props.language}
         measurements={props.measurements}
+        plan={props.planned.plan}
+        playback={props.playback}
+        viewerState={viewerState}
       />
-    </>
+    </React.Suspense>
   );
 }
 

@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 
-import { createMailer, isMailerConfigured, renderLoginCodeEmail, renderProInterestEmail } from "./mailer";
+import {
+  createMailer,
+  isMailerConfigured,
+  renderLoginCodeEmail,
+  renderNewUserRegistrationEmail,
+  renderProInterestEmail,
+} from "./mailer";
 
 const smtpEnv = {
   SMTP_HOST: "smtp.example.com",
@@ -107,6 +113,50 @@ describe("SMTP mailer", () => {
     expect(message.html).toContain("&lt;buyer@example.com&gt;");
     expect(message.html).toContain("&lt;203.0.113.12&gt;");
     expect(message.html).toContain("&lt;pricing&gt;");
+  });
+
+  test("sends new-user registration email to the operator", async () => {
+    const sentMessages: Array<Record<string, unknown>> = [];
+    const mailer = createMailer({
+      env: smtpEnv,
+      transportFactory: (config) => ({
+        async sendMail(payload) {
+          sentMessages.push({ config, payload });
+        },
+      }),
+    });
+
+    await mailer.sendNewUserRegistration({
+      email: "new@example.com",
+      operatorEmail: "machengyu519@gmail.com",
+      registeredAt: "2026-05-16T14:00:00.000Z",
+      userId: "user-9",
+    });
+
+    expect(sentMessages).toEqual([
+      {
+        config: expect.objectContaining({
+          host: "smtp.example.com",
+        }),
+        payload: expect.objectContaining({
+          from: "\"physics-playground\" <from@example.com>",
+          to: "machengyu519@gmail.com",
+          subject: "New user registered: new@example.com",
+          text: "有新用户注册，邮箱是 new@example.com，注册时间是 2026-05-16T14:00:00.000Z。",
+        }),
+      },
+    ]);
+  });
+
+  test("escapes new-user registration email HTML", () => {
+    const message = renderNewUserRegistrationEmail({
+      email: "<new@example.com>",
+      registeredAt: "<2026-05-16T14:00:00.000Z>",
+      userId: "<user-9>",
+    });
+
+    expect(message.html).toContain("&lt;new@example.com&gt;");
+    expect(message.html).toContain("&lt;2026-05-16T14:00:00.000Z&gt;");
   });
 });
 

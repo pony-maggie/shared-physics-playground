@@ -140,6 +140,14 @@ describe("3D renderer visual artifacts", () => {
     expect(container.querySelector('[color="#f4d35e"][emissive="#f4d35e"]')).toBeNull();
   });
 
+  test("circular motion renders the Articraft skateboard-inspired wheel assembly", () => {
+    const { container } = render(<CircularMotion3D {...baseProps(circularPlan)} />);
+
+    expect(container.querySelectorAll("cylindergeometry").length).toBeGreaterThanOrEqual(6);
+    expect(container.querySelector('[color="#5fc7ff"][emissive="#0ea5e9"]')).not.toBeNull();
+    expect(container.querySelector('[color="#101828"]')).not.toBeNull();
+  });
+
   test("measurement bars are still available during the Measure step", () => {
     const { container } = render(<SpringOscillator3D {...baseProps(springPlan, measureViewerState)} />);
 
